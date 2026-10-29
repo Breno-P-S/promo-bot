@@ -1,0 +1,308 @@
+// ============================================================
+// Schema do banco de dados - Central de Promoções
+// PostgreSQL via Prisma ORM
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------
+// Administração / acesso ao painel
+// ------------------------------------------------------------
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  senhaHash String   @map("senha_hash")
+  nome      String
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  @@map("admins")
+}
+
+// ------------------------------------------------------------
+// Plataformas suportadas (telegram, whatsapp, ...)
+// ------------------------------------------------------------
+model Plataforma {
+  id    String  @id @default(uuid())
+  chave String  @unique // "telegram" | "whatsapp"
+  nome  String
+  ativo Boolean @default(true)
+
+  grupos Grupo[]
+
+  @@map("plataformas")
+}
+
+// ------------------------------------------------------------
+// Grupos/canais: podem ser FONTE (origem monitorada) ou
+// DESTINO (onde publicamos). Um mesmo registro nunca é os dois;
+// a distinção fica no campo `tipo`.
+// ------------------------------------------------------------
+enum TipoGrupo {
+  FONTE
+  DESTINO
+}
+
+model Grupo {
+  id                   String     @id @default(uuid())
+  plataforma           Plataforma @relation(fields: [plataformaId], references: [id])
+  plataformaId         String     @map("plataforma_id")
+  tipo                 TipoGrupo
+  identificadorExterno String     @map("identificador_externo") // chat id no Telegram, JID no WhatsApp
+  nome                 String
+  ativo                Boolean    @default(true)
+  criadoEm             DateTime   @default(now()) @map("criado_em")
+
+  // Regras específicas para esta fonte (regras globais têm grupoFonteId = null)
+  regras Regra[]
+
+  // Mensagens capturadas nesta fonte
+  mensagens          Mensagem[]
+  mensagensIgnoradas MensagemIgnorada[]
+
+  // Vínculos: quando este grupo é um DESTINO Telegram, pode estar
+  // ligado a N destinos WhatsApp (e vice-versa, futuramente)
+  vinculosComoOrigem  VinculoDestino[]   @relation("vinculoOrigem")
+  vinculosComoDestino VinculoDestino[]   @relation("vinculoDestinoRel")
+  categoriasDestino   CategoriaDestino[]
+
+  @@unique([plataformaId, identificadorExterno])
+  @@map("grupos")
+}
+
+// ------------------------------------------------------------
+// Liga um destino "principal" (ex: Telegram Principal) a outros
+// destinos que devem replicar a mesma publicação (ex: WhatsApp).
+// Modelado N:N para permitir múltiplos destinos futuros.
+// ------------------------------------------------------------
+model VinculoDestino {
+  id        String  @id @default(uuid())
+  origemId  String  @map("origem_id")
+  destinoId String  @map("destino_id")
+  ativo     Boolean @default(true)
+
+  origem  Grupo @relation("vinculoOrigem", fields: [origemId], references: [id])
+  destino Grupo @relation("vinculoDestinoRel", fields: [destinoId], references: [id])
+
+  @@unique([origemId, destinoId])
+  @@map("vinculos_destino")
+}
+
+// ------------------------------------------------------------
+// Regras de processamento de texto/links.
+// grupoFonteId = null  -> regra global (aplica a todas as fontes)
+// grupoFonteId = X     -> regra específica daquela fonte
+// ------------------------------------------------------------
+enum TipoRegra {
+  REMOVER_TEXTO
+  ADICIONAR_TEXTO
+  REMOVER_LINK
+  ASSINATURA
+  SUBSTITUIR_TEXTO
+}
+
+model Regra {
+  id           String    @id @default(uuid())
+  grupoFonte   Grupo?    @relation(fields: [grupoFonteId], references: [id])
+  grupoFonteId String?   @map("grupo_fonte_id")
+  tipo         TipoRegra
+  padrao       String // regex ou texto a buscar
+  valor        String? // texto de substituição/adição (quando aplicável)
+  ordem        Int       @default(0) // ordem de aplicação
+  ativo        Boolean   @default(true)
+  criadoEm     DateTime  @default(now()) @map("criado_em")
+
+  @@map("regras")
+}
+
+// ------------------------------------------------------------
+// Mensagens capturadas e processadas, com hash único para
+// evitar duplicação de publicação.
+// ------------------------------------------------------------
+enum StatusMensagem {
+  RECEBIDA
+  PROCESSANDO
+  PROCESSADA
+  AGUARDANDO_REVISAO
+  PUBLICANDO
+  PUBLICADA_TELEGRAM
+  PUBLICADA_WHATSAPP
+  FALHOU
+  DESCARTADA_DUPLICADA
+  DESCARTADA_MANUAL
+}
+
+model Mensagem {
+  id                 String         @id @default(uuid())
+  grupoFonte         Grupo          @relation(fields: [grupoFonteId], references: [id])
+  grupoFonteId       String         @map("grupo_fonte_id")
+  hashUnico          String         @map("hash_unico")
+  idExternoOriginal  String         @map("id_externo_original") // id da mensagem na plataforma de origem
+  conteudoOriginal   String         @map("conteudo_original") @db.Text
+  conteudoProcessado String?        @map("conteudo_processado") @db.Text
+  midias             Json? // urls/file_ids de imagens e vídeos
+  confianca          Int? // 0..100, calculado pelo formatador determinístico
+  analise            Json? // diagnóstico estruturado; preparado para categoria/roteamento futuro
+  status             StatusMensagem @default(RECEBIDA)
+  criadoEm           DateTime       @default(now()) @map("criado_em")
+  atualizadoEm       DateTime       @updatedAt @map("atualizado_em")
+
+  logs       Log[]
+  categorias MensagemCategoria[]
+
+  @@unique([grupoFonteId, idExternoOriginal])
+  @@index([hashUnico])
+  @@index([status, criadoEm(sort: Desc)])
+  @@map("mensagens")
+}
+
+// ------------------------------------------------------------
+// Mensagens relevantes que o bot decidiu não processar.
+// Mantidas separadas de Mensagem para não misturar itens da fila
+// principal com diagnósticos de descarte/ignoro.
+// ------------------------------------------------------------
+model MensagemIgnorada {
+  id                String   @id @default(uuid())
+  plataforma        String   @default("telegram")
+  grupoFonte        Grupo?   @relation(fields: [grupoFonteId], references: [id], onDelete: SetNull)
+  grupoFonteId      String?  @map("grupo_fonte_id")
+  identificadorChat String?  @map("identificador_chat")
+  idExternoOriginal String?  @map("id_externo_original")
+  conteudo          String?  @db.Text
+  motivo            String   @db.Text
+  criadoEm          DateTime @default(now()) @map("criado_em")
+
+  @@unique([grupoFonteId, idExternoOriginal, motivo])
+  @@index([criadoEm])
+  @@map("mensagens_ignoradas")
+}
+
+// ------------------------------------------------------------
+// Categorias e roteamento. Uma mensagem pode pertencer a várias
+// categorias e cada categoria pode apontar para vários destinos
+// Telegram; os destinos WhatsApp continuam vindo dos vínculos do
+// destino Telegram principal.
+// ------------------------------------------------------------
+enum OrigemClassificacaoCategoria {
+  AUTOMATICA
+  MANUAL
+}
+
+model Categoria {
+  id               String   @id @default(uuid())
+  chave            String   @unique
+  nome             String
+  descricao        String?
+  ativo            Boolean  @default(true)
+  prioridade       Int      @default(0)
+  limiarConfianca  Int      @default(60) @map("limiar_confianca")
+  palavrasChave    String[] @default([]) @map("palavras_chave")
+  palavrasExclusao String[] @default([]) @map("palavras_exclusao")
+  criadoEm         DateTime @default(now()) @map("criado_em")
+  atualizadoEm     DateTime @default(now()) @updatedAt @map("atualizado_em")
+
+  mensagens MensagemCategoria[]
+  destinos  CategoriaDestino[]
+
+  @@map("categorias")
+}
+
+model MensagemCategoria {
+  mensagemId   String                       @map("mensagem_id")
+  categoriaId  String                       @map("categoria_id")
+  confianca    Int
+  principal    Boolean                      @default(false)
+  origem       OrigemClassificacaoCategoria @default(AUTOMATICA)
+  motivos      Json?
+  criadoEm     DateTime                     @default(now()) @map("criado_em")
+  atualizadoEm DateTime                     @default(now()) @updatedAt @map("atualizado_em")
+
+  mensagem  Mensagem  @relation(fields: [mensagemId], references: [id], onDelete: Cascade)
+  categoria Categoria @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+
+  @@id([mensagemId, categoriaId])
+  @@index([categoriaId, confianca])
+  @@map("mensagens_categorias")
+}
+
+model CategoriaDestino {
+  categoriaId    String   @map("categoria_id")
+  grupoDestinoId String   @map("grupo_destino_id")
+  ativo          Boolean  @default(true)
+  criadoEm       DateTime @default(now()) @map("criado_em")
+
+  categoria    Categoria @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  grupoDestino Grupo     @relation(fields: [grupoDestinoId], references: [id], onDelete: Cascade)
+
+  @@id([categoriaId, grupoDestinoId])
+  @@index([grupoDestinoId])
+  @@map("categorias_destinos")
+}
+
+// ------------------------------------------------------------
+// Configurações globais mutáveis pelo painel.
+// ------------------------------------------------------------
+model ConfiguracaoSistema {
+  chave        String   @id
+  valor        Json
+  atualizadoEm DateTime @default(now()) @updatedAt @map("atualizado_em")
+
+  @@map("configuracoes_sistema")
+}
+
+// ------------------------------------------------------------
+// Logs de cada etapa do pipeline, por mensagem
+// ------------------------------------------------------------
+enum StatusLog {
+  OK
+  ERRO
+}
+
+model Log {
+  id         String    @id @default(uuid())
+  mensagem   Mensagem  @relation(fields: [mensagemId], references: [id])
+  mensagemId String    @map("mensagem_id")
+  etapa      String // "captura" | "processamento" | "publicacao_telegram" | "publicacao_whatsapp"
+  status     StatusLog
+  detalhe    String?   @db.Text
+  criadoEm   DateTime  @default(now()) @map("criado_em")
+
+  @@map("logs")
+}
+
+// ------------------------------------------------------------
+// Status das integrações (sessão do userbot, sessão do Baileys, etc)
+// para o painel mostrar se algo está conectado/caiu
+// ------------------------------------------------------------
+model StatusIntegracao {
+  id             String   @id @default(uuid())
+  servico        String   @unique // "telegram_userbot" | "telegram_bot" | "whatsapp"
+  conectado      Boolean  @default(false)
+  ultimaChecagem DateTime @updatedAt @map("ultima_checagem")
+  detalhe        String?
+
+  @@map("status_integracoes")
+}
+
+// ------------------------------------------------------------
+// Cache de conversão de links de afiliado do Mercado Livre.
+// Evita resolver o produto e chamar o createLink de novo toda vez
+// que o mesmo link curto (meli.la/xxx) aparecer numa nova mensagem.
+// ------------------------------------------------------------
+model LinkAfiliadoMercadoLivre {
+  id             String   @id @default(uuid())
+  codigoOriginal String   @unique @map("codigo_original") // "2cYeScY" de meli.la/2cYeScY
+  productId      String?  @map("product_id") // "MLB18425328"
+  urlCanonica    String?  @map("url_canonica")
+  linkGerado     String   @map("link_gerado") // seu meli.la/novo-codigo
+  criadoEm       DateTime @default(now()) @map("criado_em")
+  atualizadoEm   DateTime @updatedAt @map("atualizado_em")
+
+  @@map("links_afiliados_mercado_livre")
+}

@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Central de Promoções — Painel</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --bg-elev: #121820;
+    --bg-elev-2: #182029;
+    --border: #232c37;
+    --text: #e6edf3;
+    --text-dim: #8b98a5;
+    --text-faint: #59636e;
+    --green: #3ddc8c;
+    --green-dim: #1d3a2c;
+    --amber: #f5a623;
+    --amber-dim: #3a2f14;
+    --red: #ff5c5c;
+    --red-dim: #3a1c1c;
+    --blue: #58a6ff;
+    --mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(ellipse at top, #0e141b 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+  }
+
+  /* ---------- Login ---------- */
+  #tela-login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .login-card {
+    width: 320px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+  }
+  .login-card h1 {
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin: 0 0 4px;
+    font-weight: 600;
+  }
+  .login-card .sub {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    margin-bottom: 24px;
+  }
+  .login-card input {
+    width: 100%;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 10px;
+    font-family: var(--sans);
+  }
+  .login-card input:focus { outline: 1px solid var(--blue); }
+  .login-card button {
+    width: 100%;
+    background: var(--blue);
+    color: #06121f;
+    border: none;
+    border-radius: 6px;
+    padding: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .login-card button:hover { filter: brightness(1.08); }
+  .login-erro {
+    color: var(--red);
+    font-size: 12px;
+    font-family: var(--mono);
+    margin-top: 10px;
+    min-height: 14px;
+  }
+
+  /* ---------- App ---------- */
+  #app { display: none; max-width: 1080px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  header.topo {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  header.topo h1 {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin: 0;
+  }
+  header.topo h1 span { color: var(--text-faint); font-weight: 400; }
+  .topo-direita { display: flex; align-items: center; gap: 14px; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+  .ponto-vivo { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 6px; box-shadow: 0 0 6px var(--green); animation: pulsar 2s infinite; }
+  @keyframes pulsar { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .btn-sair { background: none; border: 1px solid var(--border); color: var(--text-dim); border-radius: 6px; padding: 4px 10px; font-family: var(--sans); font-size: 12px; cursor: pointer; }
+  .btn-sair:hover { border-color: var(--text-faint); color: var(--text); }
+
+  /* Banner geral */
+  .banner {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid;
+  }
+  .banner.ok { background: var(--green-dim); border-color: #245c3f; color: var(--green); }
+  .banner.problema { background: var(--red-dim); border-color: #6b2b2b; color: var(--red); }
+
+  /* Grid de cards de serviço */
+  .grid-servicos {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+  .card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .card-topo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .card-titulo { font-size: 13px; font-weight: 600; }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; }
+  .badge.verde { background: var(--green-dim); color: var(--green); }
+  .badge.verde::before { background: var(--green); box-shadow: 0 0 5px var(--green); }
+  .badge.amarelo { background: var(--amber-dim); color: var(--amber); }
+  .badge.amarelo::before { background: var(--amber); box-shadow: 0 0 5px var(--amber); }
+  .badge.vermelho { background: var(--red-dim); color: var(--red); }
+  .badge.vermelho::before { background: var(--red); box-shadow: 0 0 5px var(--red); }
+  .badge.cinza { background: #1a2129; color: var(--text-faint); }
+  .badge.cinza::before { background: var(--text-faint); }
+
+  .linha-info { display: flex; justify-content: space-between; font-size: 12.5px; padding: 5px 0; border-bottom: 1px dashed var(--border); }
+  .linha-info:last-child { border-bottom: none; }
+  .linha-info .label { color: var(--text-dim); }
+  .linha-info .valor { font-family: var(--mono); color: var(--text); text-align: right; }
+  .linha-info .valor.destaque-verde { color: var(--green); }
+  .linha-info .valor.destaque-amarelo { color: var(--amber); }
+  .linha-info .valor.destaque-vermelho { color: var(--red); }
+
+  .erro-detalhe {
+    margin-top: 10px;
+    background: var(--red-dim);
+    border: 1px solid #6b2b2b;
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #ffb3b3;
+    word-break: break-word;
+  }
+
+  /* Resumo numérico */
+  .grid-resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 26px; }
+  .stat { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .stat .num { font-family: var(--mono); font-size: 26px; font-weight: 700; }
+  .stat .label { font-size: 11.5px; color: var(--text-dim); margin-top: 4px; }
+
+  /* Tabela de mensagens recentes */
+  .secao-titulo { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); margin: 0 0 12px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { text-align: left; color: var(--text-faint); font-weight: 600; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  td { padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .txt-truncado { max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); }
+  .tag-status { font-family: var(--mono); font-size: 10.5px; padding: 2px 7px; border-radius: 4px; }
+  .vazio { color: var(--text-faint); font-size: 12.5px; padding: 20px 0; text-align: center; font-family: var(--mono); }
+
+  /* Fila de revisão */
+  .revisao-card { margin-bottom: 14px; }
+  .revisao-imagem { max-width: 100%; max-height: 280px; object-fit: contain; border-radius: 8px; margin-bottom: 12px; display: block; background: #000; }
+  .revisao-texto {
+    width: 100%;
+    background: var(--bg-elev-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+    margin-bottom: 10px;
+  }
+  .revisao-texto:focus { outline: 1px solid var(--blue); }
+  .links-originais-alerta {
+    margin: 0 0 12px;
+    padding: 9px 11px;
+    border: 1px solid #6b2b2b;
+    background: var(--red-dim);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #ffb3b3;
+  }
+  .link-original-linha {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 5px;
+    word-break: break-all;
+  }
+  .link-original-badge {
+    color: #fff;
+    background: var(--red);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-weight: 800;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .link-original-erro { color: var(--text-dim); font-size: 10px; width: 100%; }
+  .revisao-acoes { display: flex; gap: 8px; }
+  .btn-revisao { flex: 1; border: none; border-radius: 6px; padding: 10px; font-weight: 600; font-size: 12.5px; cursor: pointer; font-family: var(--sans); }
+  .btn-publicar { background: var(--green); color: #06231a; }
+  .btn-publicar:hover { filter: brightness(1.08); }
+  .btn-formatar { background: rgba(88,166,255,.12); color: #9ecbff; border: 1px solid rgba(88,166,255,.35); }
+  .btn-formatar:hover { border-color: var(--blue); color: #c7e2ff; }
+  .btn-descartar { background: var(--bg-elev-2); color: var(--text-dim); border: 1px solid var(--border); }
+  .btn-descartar:hover { border-color: var(--red); color: var(--red); }
+  .confianca-badge { font:700 10px var(--mono); padding:3px 8px; border-radius:999px; border:1px solid var(--border); }
+  .confianca-badge.alta { color:var(--green); background:var(--green-dim); border-color:#245c3f; }
+  .confianca-badge.media { color:var(--amber); background:var(--amber-dim); border-color:#6b521b; }
+  .confianca-badge.baixa { color:var(--red); background:var(--red-dim); border-color:#6b2b2b; }
+  .revisao-card.com-falha-link { border-color: #8c671d; box-shadow: inset 0 0 0 1px rgba(245,166,35,.08); }
+  .links-originais-alerta { border-color: #8c671d; background: var(--amber-dim); color: #ffd98e; }
+  .link-original-badge { background: var(--amber); color: #2b1c00; }
+  .acoes-lote { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .btn-lote { border:1px solid var(--border); border-radius:6px; padding:8px 12px; font-weight:700; font-size:12px; cursor:pointer; font-family:var(--sans); }
+  .btn-lote.publicar { background:var(--green); color:#06231a; border-color:transparent; }
+  .btn-lote.excluir { background:var(--red-dim); color:#ffb3b3; border-color:#6b2b2b; }
+  .btn-lote:disabled { opacity:.5; cursor:not-allowed; }
+  .status-lote { font-family:var(--mono); color:var(--text-dim); font-size:11px; }
+  .abas { display:flex; gap:8px; margin-bottom:12px; }
+  .aba-btn { background:var(--bg-elev-2); color:var(--text-dim); border:1px solid var(--border); border-radius:6px; padding:8px 12px; cursor:pointer; font-weight:700; font-size:12px; }
+  .aba-btn.ativa { color:var(--text); border-color:var(--blue); box-shadow: inset 0 0 0 1px rgba(88,166,255,.2); }
+  .ignorada-card { margin-bottom:10px; }
+  .ignorada-motivo { color:var(--amber); font-family:var(--mono); font-size:11px; margin-bottom:7px; }
+  .ignorada-meta { color:var(--text-faint); font-family:var(--mono); font-size:10px; margin-bottom:8px; }
+  .ignorada-conteudo { white-space:pre-wrap; color:var(--text-dim); font-size:12px; line-height:1.45; }
+  tr.com-falha-link td { background:rgba(245,166,35,.055); }
+
+  /* Link inesperado: qualquer URL fora dos encurtadores aceitos */
+  .revisao-card.com-link-inesperado {
+    border-color: #8d3434;
+    box-shadow: inset 0 0 0 1px rgba(255,92,92,.12);
+  }
+  .links-inesperados-alerta {
+    margin: 0 0 12px;
+    padding: 10px 11px;
+    border: 1px solid #8d3434;
+    background: rgba(255,92,92,.12);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #ffb3b3;
+  }
+  .link-inesperado-linha {
+    margin-top: 6px;
+    word-break: break-all;
+    color: #ffd1d1;
+  }
+
+  .fontes-card { padding: 0; overflow: hidden; }
+  .fontes-topo { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border); }
+  .fontes-ajuda { color:var(--text-faint); font-size:11px; margin-top:3px; }
+  .fontes-contador { font-family:var(--mono); font-size:11px; color:var(--text-dim); white-space:nowrap; }
+  .fonte-linha { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:12px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border); }
+  .fonte-linha:last-child { border-bottom:none; }
+  .fonte-nome { font-weight:700; font-size:13px; color:var(--text); overflow-wrap:anywhere; }
+  .fonte-id { font:10px var(--mono); color:var(--text-faint); margin-top:3px; overflow-wrap:anywhere; }
+  .btn-fonte-status { min-width:92px; border-radius:6px; padding:7px 10px; font:700 11px var(--sans); cursor:pointer; border:1px solid var(--border); }
+  .btn-fonte-status.desativar { background:var(--red-dim); color:#ffb3b3; border-color:#6b2b2b; }
+  .btn-fonte-status.ativar { background:rgba(46,160,67,.12); color:#8de6a0; border-color:rgba(46,160,67,.45); }
+  .btn-fonte-status:disabled { opacity:.55; cursor:wait; }
+  .fontes-erro { padding:12px 16px; color:var(--red); font-size:12px; }
+
+  .destino-form { display:grid; grid-template-columns:140px minmax(180px,.8fr) minmax(260px,1.2fr) auto; gap:8px; padding:12px 14px; border-bottom:1px solid var(--border); background:var(--bg-elev-2); }
+  .destino-form input, .destino-form select { background:var(--bg); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:7px 9px; font:12px var(--sans); min-width:0; }
+  .destino-linha { padding:12px 14px; border-bottom:1px solid var(--border); }
+  .destino-linha:last-child { border-bottom:none; }
+  .destino-topo { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:10px; align-items:center; }
+  .destino-plataforma { font:700 10px var(--mono); padding:3px 7px; border-radius:999px; border:1px solid var(--border); color:var(--text-dim); }
+  .destino-whatsapp-vinculos { margin-top:9px; display:flex; flex-wrap:wrap; gap:7px 12px; padding:8px 10px; border-radius:6px; border:1px solid var(--border); background:var(--bg-elev-2); color:var(--text-dim); font-size:11px; }
+  .destino-whatsapp-vinculos label { display:flex; align-items:center; gap:5px; cursor:pointer; }
+  .destino-acoes { margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; }
+  @media (max-width: 760px) { .destino-form { grid-template-columns:1fr; } .destino-topo { grid-template-columns:1fr auto; } }
+
+  .categorias-config { display:grid; gap:10px; }
+  .categoria-config-linha { padding:12px 14px; border-bottom:1px solid var(--border); }
+  .categoria-config-linha:last-child { border-bottom:none; }
+  .categoria-config-topo { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; }
+  .categoria-config-nome { font-weight:800; font-size:13px; }
+  .categoria-form { display:flex; gap:8px; flex-wrap:wrap; padding:12px 14px; border-bottom:1px solid var(--border); background:var(--bg-elev-2); }
+  .categoria-form input { background:var(--bg); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:7px 9px; font:12px var(--sans); min-width:180px; }
+  .categoria-regra-grid { display:grid; grid-template-columns:minmax(220px,1fr) 100px auto; gap:8px; align-items:center; margin:8px 0; }
+  .categoria-regra-grid input[type=text], .categoria-regra-grid input[type=number] { width:100%; background:var(--bg-elev-2); border:1px solid var(--border); color:var(--text); border-radius:6px; padding:7px 9px; font:11px var(--sans); }
+  .categoria-destinos { display:flex; flex-wrap:wrap; gap:8px 12px; color:var(--text-dim); font-size:11px; }
+  .categoria-destinos label, .categorias-mensagem label { display:flex; align-items:center; gap:5px; cursor:pointer; }
+  .btn-salvar-categoria { margin-top:9px; background:rgba(88,166,255,.12); color:#9ecbff; border:1px solid rgba(88,166,255,.35); border-radius:6px; padding:6px 10px; font-weight:700; cursor:pointer; }
+  .categorias-mensagem { display:flex; flex-wrap:wrap; gap:7px 12px; margin:0 0 10px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--bg-elev-2); font-size:11px; color:var(--text-dim); }
+  .categoria-chip { font:700 10px var(--mono); padding:3px 7px; border-radius:999px; background:rgba(88,166,255,.10); border:1px solid rgba(88,166,255,.28); color:#a8d2ff; }
+  .categoria-chip.manual { color:var(--green); border-color:#245c3f; background:var(--green-dim); }
+  .categoria-chip.baixa { color:var(--amber); border-color:#6b521b; background:var(--amber-dim); }
+  .aba-btn .contagem { opacity:.65; margin-left:4px; font-family:var(--mono); }
+
+  @media (max-width: 640px) { .fonte-linha { grid-template-columns:1fr auto; } .fonte-linha .fonte-status-badge { grid-column:1; } }
+
+  /* UI 2.0 */
+  :root{--bg:#070a0f;--bg-elev:rgba(15,21,29,.9);--bg-elev-2:rgba(22,30,40,.84);--border:rgba(148,163,184,.14);--border-strong:rgba(148,163,184,.25);--text:#eef4fb;--text-dim:#9baabd;--text-faint:#687789;--green:#4ade80;--green-dim:rgba(34,197,94,.1);--amber:#fbbf24;--amber-dim:rgba(245,158,11,.11);--red:#fb7185;--red-dim:rgba(244,63,94,.1);--blue:#60a5fa;--violet:#a78bfa;--shadow-soft:0 8px 24px rgba(0,0,0,.15)}
+  html{scroll-behavior:smooth}body{background:radial-gradient(circle at 20% -10%,rgba(59,130,246,.12),transparent 34%),radial-gradient(circle at 92% 10%,rgba(167,139,250,.08),transparent 28%),linear-gradient(180deg,#090d13,#070a0f 56%);background-attachment:fixed}body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.16;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:28px 28px}
+  #tela-login{padding:24px;position:relative;overflow:hidden}#tela-login:before{content:"";position:absolute;width:430px;height:430px;border-radius:50%;background:rgba(59,130,246,.12);filter:blur(90px);top:-120px;left:-100px}.login-card{width:min(390px,100%);padding:38px;border-radius:20px;border-color:var(--border-strong);box-shadow:0 28px 80px rgba(0,0,0,.36);position:relative}.login-card h1{font-size:19px;color:var(--text);text-transform:none;letter-spacing:-.02em}.login-card .sub{margin-top:6px;margin-bottom:28px}.login-card input{border-radius:10px;padding:12px 13px;transition:.18s ease}.login-card input:focus{outline:none;border-color:rgba(96,165,250,.7);box-shadow:0 0 0 3px rgba(59,130,246,.12)}.login-card button{border-radius:10px;padding:12px;background:linear-gradient(135deg,#60a5fa,#3b82f6);box-shadow:0 8px 20px rgba(59,130,246,.18);transition:.16s ease}.login-card button:hover{transform:translateY(-1px)}
+  #app{max-width:none;margin:0;padding:0;min-height:100vh}.painel-sidebar{position:fixed;inset:0 auto 0 0;width:232px;padding:22px 14px;border-right:1px solid var(--border);background:rgba(8,12,18,.78);z-index:30;display:flex;flex-direction:column}.sidebar-brand{padding:5px 9px 22px;display:flex;gap:10px;align-items:center}.sidebar-logo{width:35px;height:35px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(96,165,250,.2),rgba(167,139,250,.16));border:1px solid rgba(96,165,250,.25);font-size:17px}.sidebar-brand strong{display:block;font-size:13px}.sidebar-brand small{display:block;margin-top:3px;color:var(--text-faint);font:10px var(--mono)}.sidebar-label{color:var(--text-faint);text-transform:uppercase;font:700 9px var(--mono);letter-spacing:.1em;padding:4px 10px 8px}.sidebar-nav{display:grid;gap:4px}.sidebar-nav button{border:0;background:transparent;color:var(--text-dim);border-radius:10px;padding:10px 11px;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;font:600 12px var(--sans);transition:.16s ease}.sidebar-nav button:hover{color:var(--text);background:rgba(255,255,255,.045);transform:translateX(2px)}.sidebar-nav button.ativo{color:#dcecff;background:rgba(59,130,246,.11);box-shadow:inset 0 0 0 1px rgba(96,165,250,.16)}.sidebar-nav .nav-ico{width:20px;text-align:center;font-size:14px}.sidebar-footer{margin-top:auto;padding:12px 9px 2px;color:var(--text-faint);font:10px/1.5 var(--mono);border-top:1px solid var(--border)}.painel-main{margin-left:232px;padding:24px 30px 70px;max-width:1500px}
+  header.topo{position:sticky;top:0;z-index:20;margin:-24px -30px 24px;padding:17px 30px;align-items:center;background:rgba(7,10,15,.76);border-bottom:1px solid var(--border)}header.topo h1{font-size:18px;letter-spacing:-.02em}header.topo h1 span{font-size:12px;margin-left:5px}.topo-direita{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:999px;padding:6px 7px 6px 11px}.btn-sair{border-radius:999px;padding:5px 11px}
+  .painel-secao{scroll-margin-top:92px;margin-bottom:28px!important;animation:uiEntrar .28s ease both}@keyframes uiEntrar{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}.secao-titulo{font-size:11px;letter-spacing:.09em;margin:0 0 11px;display:flex;align-items:center;gap:8px}.secao-titulo:before{content:"";width:3px;height:12px;border-radius:4px;background:linear-gradient(var(--blue),var(--violet))}.card,.stat{border-color:var(--border);border-radius:14px;box-shadow:var(--shadow-soft);transition:.18s ease}.card:hover,.stat:hover{border-color:var(--border-strong)}.grid-servicos{gap:12px}.grid-resumo{grid-template-columns:repeat(4,minmax(150px,1fr));gap:12px}.stat{position:relative;overflow:hidden;padding:18px 19px}.stat:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,rgba(96,165,250,.42),transparent);opacity:.55}.stat .num{font-size:28px;letter-spacing:-.05em}.stat .label{line-height:1.35}
+  input,select,textarea,button{outline:none}.destino-form,.categoria-form{background:rgba(255,255,255,.018);padding:14px 16px}.destino-form input,.destino-form select,.categoria-form input,.categoria-regra-grid input[type=text],.categoria-regra-grid input[type=number]{border-radius:9px;transition:.16s ease}.destino-form input:focus,.destino-form select:focus,.categoria-form input:focus,.categoria-regra-grid input:focus{border-color:rgba(96,165,250,.65);box-shadow:0 0 0 3px rgba(59,130,246,.09);background:rgba(20,28,38,.96)}.btn-salvar-categoria,.btn-lote,.btn-revisao,.btn-fonte-status{border-radius:9px;transition:.14s ease}.btn-salvar-categoria:hover:not(:disabled),.btn-lote:hover:not(:disabled),.btn-revisao:hover:not(:disabled),.btn-fonte-status:hover:not(:disabled){transform:translateY(-1px)}button:active:not(:disabled){transform:translateY(0) scale(.985)!important}.fontes-card,.card[style*="padding:0"]{border-radius:14px!important}.fontes-topo{padding:16px 18px}.fonte-linha,.destino-linha,.categoria-config-linha{transition:background .16s ease}.fonte-linha:hover,.destino-linha:hover,.categoria-config-linha:hover{background:rgba(255,255,255,.018)}table{font-size:12px}thead{position:sticky;top:69px;background:rgba(15,21,29,.96);z-index:2}tbody tr{transition:background .15s ease}tbody tr:hover td{background:rgba(255,255,255,.018)}
+  .fila-toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap}.fila-busca{min-width:260px;flex:1;max-width:420px;display:flex;align-items:center;gap:8px;background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;padding:0 11px;box-shadow:var(--shadow-soft)}.fila-busca span{color:var(--text-faint)}.fila-busca input{width:100%;padding:10px 0;border:0;background:transparent;color:var(--text);font:12px var(--sans)}.fila-busca input::placeholder{color:var(--text-faint)}.abas{position:sticky;top:69px;z-index:12;overflow-x:auto;scrollbar-width:thin;padding:8px 0;margin:0 0 12px;background:linear-gradient(180deg,rgba(7,10,15,.96),rgba(7,10,15,.78));}.aba-btn{white-space:nowrap;border-radius:999px;padding:8px 12px;background:rgba(255,255,255,.025);transition:.15s ease}.aba-btn:hover{color:var(--text);border-color:var(--border-strong)}.aba-btn.ativa{color:#e9f3ff;border-color:rgba(96,165,250,.45);background:rgba(59,130,246,.12);box-shadow:0 0 0 3px rgba(59,130,246,.05)}.acoes-lote{background:rgba(255,255,255,.018);border:1px solid var(--border);border-radius:11px;padding:9px}
+  .revisao-card{padding:17px;border-radius:15px;box-shadow:var(--shadow-soft);transition:.16s ease}.revisao-card:hover{transform:translateY(-1px);box-shadow:0 13px 34px rgba(0,0,0,.2)}.revisao-texto{min-height:150px;border-radius:10px;padding:13px 14px;font-size:13px;line-height:1.62;transition:.16s ease}.revisao-texto:focus{outline:none;border-color:rgba(96,165,250,.65);box-shadow:0 0 0 3px rgba(59,130,246,.09)}.revisao-acoes{gap:7px;position:sticky;bottom:8px;z-index:4}.btn-revisao{padding:10px 12px;box-shadow:0 4px 12px rgba(0,0,0,.1)}.btn-publicar{background:linear-gradient(135deg,#4ade80,#22c55e)}.categorias-mensagem{border-radius:10px;padding:10px 11px;gap:8px 13px}.categoria-chip,.confianca-badge{padding:4px 8px}.links-inesperados-alerta,.links-originais-alerta{border-radius:10px}
+  #toast-container{position:fixed;right:22px;bottom:22px;z-index:1000;display:grid;gap:9px;width:min(360px,calc(100vw - 30px));pointer-events:none}.toast-ui{pointer-events:auto;background:rgba(18,25,34,.96);border:1px solid var(--border-strong);color:var(--text);border-radius:12px;padding:12px 14px;box-shadow:0 16px 42px rgba(0,0,0,.34);font-size:12px;line-height:1.45;animation:toastIn .22s ease both}.toast-ui.erro{border-color:rgba(251,113,133,.45)}.toast-ui.ok{border-color:rgba(74,222,128,.38)}@keyframes toastIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}.toast-ui.saindo{animation:toastOut .2s ease forwards}@keyframes toastOut{to{opacity:0;transform:translateY(6px)}}
+  @media(max-width:1080px){.grid-resumo{grid-template-columns:repeat(2,minmax(140px,1fr))}.painel-sidebar{width:72px;padding:18px 9px}.sidebar-brand{justify-content:center;padding:4px 0 20px}.sidebar-brand>div:last-child,.sidebar-label,.sidebar-nav .nav-text,.sidebar-footer{display:none}.sidebar-nav button{justify-content:center;padding:11px}.painel-main{margin-left:72px}}
+  @media(max-width:760px){.painel-sidebar{position:fixed;inset:auto 0 0 0;width:auto;height:62px;flex-direction:row;align-items:center;padding:7px 9px;border-right:0;border-top:1px solid var(--border)}.sidebar-brand,.sidebar-label,.sidebar-footer{display:none}.sidebar-nav{width:100%;grid-template-columns:repeat(6,1fr);gap:2px}.sidebar-nav button{padding:8px 4px}.sidebar-nav .nav-text{display:none}.painel-main{margin-left:0;padding:18px 14px 90px}header.topo{margin:-18px -14px 18px;padding:13px 14px}header.topo h1 span{display:none}.topo-direita{padding:5px 6px 5px 9px}.grid-resumo{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-servicos{grid-template-columns:1fr}.fila-toolbar{align-items:stretch}.fila-busca{max-width:none;min-width:0;width:100%}.abas{top:59px}thead{top:59px}.revisao-acoes{position:static;flex-wrap:wrap}.btn-revisao{flex:1 1 46%}}
+  @media(max-width:480px){.grid-resumo{grid-template-columns:1fr 1fr;gap:8px}.stat{padding:14px}.stat .num{font-size:23px}.destino-form,.categoria-form{padding:11px}.revisao-card{padding:12px}}
+
+
+  /* =========================================================
+     Performance pass — reduz repaints/composição sem perder o visual
+     ========================================================= */
+  .painel-sidebar,
+  header.topo,
+  .abas,
+  .login-card,
+  .toast-ui {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .painel-sidebar { background: #0b1017 !important; }
+  header.topo { background: rgba(7,10,15,.96) !important; }
+  .abas { background: #070a0f !important; }
+  .card, .stat { backdrop-filter:none !important; }
+  .revisao-card {
+    contain: layout paint;
+    content-visibility: auto;
+    contain-intrinsic-size: 420px;
+  }
+  #fila-revisao { contain: layout style; }
+  .painel-secao { animation:none !important; }
+  .card, .stat, .revisao-card {
+    will-change:auto !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior:auto !important;
+      transition-duration:.01ms !important;
+      animation-duration:.01ms !important;
+      animation-iteration-count:1 !important;
+    }
+  }
+
+
+  .config-processamento { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px 18px; margin-bottom:22px; }
+  .config-processamento .config-titulo { font-weight:700; font-size:13px; margin-bottom:4px; }
+  .config-processamento .config-ajuda { color:var(--text-dim); font-size:11px; line-height:1.5; max-width:760px; }
+  .switch-ui { position:relative; display:inline-flex; align-items:center; gap:9px; cursor:pointer; user-select:none; flex:0 0 auto; }
+  .switch-ui input { position:absolute; opacity:0; pointer-events:none; }
+  .switch-ui .trilho { width:46px; height:25px; border-radius:999px; background:#313a46; border:1px solid var(--border-strong); position:relative; transition:.18s ease; }
+  .switch-ui .trilho::after { content:""; position:absolute; width:19px; height:19px; border-radius:50%; background:#dbe7f5; top:2px; left:3px; transition:.18s ease; box-shadow:0 2px 6px rgba(0,0,0,.3); }
+  .switch-ui input:checked + .trilho { background:rgba(34,197,94,.34); border-color:rgba(74,222,128,.5); }
+  .switch-ui input:checked + .trilho::after { transform:translateX(20px); background:#79e89d; }
+  .switch-ui .estado { min-width:70px; font:700 10px var(--mono); color:var(--text-dim); }
+  .config-processamento.desligada { border-color:rgba(96,165,250,.25); background:rgba(59,130,246,.04); }
+  @media(max-width:640px){.config-processamento{align-items:flex-start;flex-direction:column}.switch-ui{align-self:flex-end}}
+
+</style>
+</head>
+<body>
+
+<div id="tela-login">
+  <div class="login-card">
+    <h1>Central de Promoções</h1>
+    <div class="sub">painel de monitoramento</div>
+    <input id="input-email" type="email" placeholder="email do admin" autocomplete="username" />
+    <input id="input-senha" type="password" placeholder="senha" autocomplete="current-password" />
+    <button id="btn-entrar">Entrar</button>
+    <div class="login-erro" id="login-erro"></div>
+  </div>
+</div>
+
+<div id="app">
+  <aside class="painel-sidebar">
+    <div class="sidebar-brand"><div class="sidebar-logo">⚡</div><div><strong>Promo Central</strong><small>controle operacional</small></div></div>
+    <div class="sidebar-label">Navegação</div>
+    <nav class="sidebar-nav">
+      <button type="button" class="ativo" data-scroll="secao-dashboard"><span class="nav-ico">◫</span><span class="nav-text">Visão geral</span></button>
+      <button type="button" data-scroll="secao-fontes"><span class="nav-ico">⌁</span><span class="nav-text">Fontes</span></button>
+      <button type="button" data-scroll="secao-destinos"><span class="nav-ico">↗</span><span class="nav-text">Destinos</span></button>
+      <button type="button" data-scroll="secao-categorias"><span class="nav-ico">◇</span><span class="nav-text">Categorias</span></button>
+      <button type="button" data-scroll="secao-fila"><span class="nav-ico">☷</span><span class="nav-text">Fila</span></button>
+      <button type="button" data-scroll="secao-recentes"><span class="nav-ico">◷</span><span class="nav-text">Recentes</span></button>
+    </nav>
+    <div class="sidebar-footer">Atualização inteligente<br>a cada 8 segundos</div>
+  </aside>
+  <main class="painel-main">
+  <div id="secao-dashboard" class="painel-secao">
+  <header class="topo">
+    <h1>Central de Promoções <span>/ painel de monitoramento</span></h1>
+    <div class="topo-direita">
+      <span><span class="ponto-vivo"></span><span id="txt-atualizado">—</span></span>
+      <button class="btn-sair" id="btn-sair">sair</button>
+    </div>
+  </header>
+
+  <div id="banner-geral"></div>
+
+  <div class="grid-servicos" id="grid-servicos"></div>
+
+  <div class="grid-resumo" id="grid-resumo"></div>
+
+  <div class="card config-processamento" id="config-processamento-card">
+    <div>
+      <div class="config-titulo">Reescrita automática das promoções</div>
+      <div class="config-ajuda" id="config-processamento-ajuda">Carregando configuração...</div>
+    </div>
+    <label class="switch-ui" title="Liga/desliga a reescrita automática para novas mensagens">
+      <input type="checkbox" id="toggle-reescrita-automatica" disabled />
+      <span class="trilho"></span>
+      <span class="estado" id="estado-reescrita-automatica">—</span>
+    </label>
+  </div>
+  </div>
+
+  <div id="secao-fontes" class="painel-secao" style="margin-bottom: 26px;">
+    <div class="secao-titulo">Grupos fonte</div>
+    <div class="card fontes-card">
+      <div class="fontes-topo">
+        <div>
+          <div class="card-titulo">Fontes monitoradas pelo userbot</div>
+          <div class="fontes-ajuda">Desativar para de capturar novas mensagens sem apagar o histórico.</div>
+        </div>
+        <div class="fontes-contador" id="fontes-contador">—</div>
+      </div>
+      <div id="lista-fontes"><div class="vazio">carregando fontes...</div></div>
+    </div>
+  </div>
+
+  <div id="secao-destinos" class="painel-secao" style="margin-bottom: 26px;">
+    <div class="secao-titulo">Grupos destino</div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="fontes-topo">
+        <div>
+          <div class="card-titulo">Destinos de publicação</div>
+          <div class="fontes-ajuda">Cadastre Telegram e WhatsApp. Para cada Telegram, marque quais grupos WhatsApp recebem a réplica.</div>
+        </div>
+        <div class="fontes-contador" id="destinos-contador">—</div>
+      </div>
+      <div class="destino-form">
+        <select id="novo-destino-plataforma"><option value="telegram">Telegram</option><option value="whatsapp">WhatsApp</option></select>
+        <input id="novo-destino-nome" placeholder="Nome do grupo" />
+        <input id="novo-destino-id" placeholder="ID Telegram (-100...) ou JID WhatsApp (...@g.us)" />
+        <button class="btn-salvar-categoria" id="btn-criar-destino" style="margin:0">+ Adicionar destino</button>
+      </div>
+      <div id="lista-destinos"><div class="vazio">carregando destinos...</div></div>
+    </div>
+  </div>
+
+  <div id="secao-categorias" class="painel-secao" style="margin-bottom: 26px;">
+    <div class="secao-titulo">Categorias e roteamento</div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="fontes-topo">
+        <div>
+          <div class="card-titulo">Destinos por categoria</div>
+          <div class="fontes-ajuda">Marque em quais grupos Telegram cada categoria deve ser publicada. O WhatsApp continua seguindo os vínculos do grupo Telegram.</div>
+        </div>
+      </div>
+      <div class="categoria-form">
+        <input id="nova-categoria-nome" placeholder="Nova categoria (ex.: Esportes)" />
+        <input id="nova-categoria-palavras" placeholder="palavras-chave separadas por vírgula" style="flex:1;min-width:280px;" />
+        <button class="btn-salvar-categoria" id="btn-criar-categoria" style="margin:0">+ Criar categoria</button>
+      </div>
+      <div id="lista-categorias-config"><div class="vazio">carregando categorias...</div></div>
+    </div>
+  </div>
+
+  <div id="secao-fila" class="painel-secao" style="margin-bottom: 26px;">
+    <div class="fila-toolbar"><div class="secao-titulo" style="margin:0">Fila e diagnósticos</div><label class="fila-busca" title="Filtra os cards carregados nesta aba"><span>⌕</span><input id="filtro-fila" type="search" placeholder="Buscar produto, cupom ou link..." autocomplete="off" /></label></div>
+    <div class="abas" id="abas-fila">
+      <button class="aba-btn ativa" data-aba="revisao">Todas</button>
+      <button class="aba-btn" data-aba="sem-categoria">Sem categoria</button>
+      <button class="aba-btn" data-aba="baixa-categoria">Baixa confiança</button>
+      <button class="aba-btn" data-aba="ignoradas">Ignoradas</button>
+    </div>
+
+    <div id="aba-revisao">
+      <div class="acoes-lote">
+        <button class="btn-lote publicar" id="btn-publicar-tudo">Publicar tudo (30s)</button>
+        <button class="btn-lote" id="btn-reclassificar-fila">Reclassificar fila</button>
+        <button class="btn-lote excluir" id="btn-excluir-tudo">Excluir tudo</button>
+        <span class="status-lote" id="status-publicacao-lote"></span>
+      </div>
+      <div id="fila-revisao"></div>
+    </div>
+
+    <div id="aba-ignoradas" style="display:none;">
+      <div class="acoes-lote">
+        <button class="btn-lote excluir" id="btn-excluir-ignoradas">Excluir todas as ignoradas</button>
+      </div>
+      <div id="lista-ignoradas"></div>
+    </div>
+  </div>
+
+  <div id="secao-recentes" class="painel-secao">
+    <div class="secao-titulo">Últimas mensagens capturadas</div>
+    <div class="card" style="padding: 0; overflow: hidden;">
+      <table>
+        <thead>
+          <tr>
+            <th>Quando</th>
+            <th>Fonte</th>
+            <th>Conteúdo</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="corpo-tabela-mensagens"></tbody>
+      </table>
+      <div class="vazio" id="tabela-vazio" style="display:none;">nenhuma mensagem capturada ainda</div>
+    </div>
+  </div>
+  </main>
+</div>
+<div id="toast-container" aria-live="polite"></div>
+
+<script>
+(function () {
+  const BASE = window.location.origin;
+
+  const PAINEL_REFRESH_MS = 8000;
+  let atualizacaoEmAndamento = false;
+  let filaEmAndamento = false;
+  let ultimaAssinaturaFila = "";
+  let ultimaAbaAssinatura = "";
+
+  function paginaVisivel() {
+    return document.visibilityState === "visible";
+  }
+
+  function assinaturaFila(mensagens) {
+    if (!Array.isArray(mensagens)) return "";
+    return mensagens.map((m) => [
+      m.id,
+      m.atualizadoEm || m.updatedAt || m.criadoEm || "",
+      m.status || "",
+      m.confianca ?? "",
+      m.conteudoProcessado || m.conteudoOriginal || "",
+      Array.isArray(m.categorias)
+        ? m.categorias.map((c) => `${c.categoriaId || c.categoria?.id || ""}:${c.confianca ?? ""}:${c.origem || ""}`).join(",")
+        : ""
+    ].join("|")).join("§");
+  }
+
+
+  // UI 2.0
+  const toastContainer=document.getElementById("toast-container");
+  function toast(mensagem,tipo=""){if(!toastContainer||!mensagem)return;const el=document.createElement("div");el.className="toast-ui "+tipo;el.textContent=String(mensagem);toastContainer.appendChild(el);setTimeout(()=>{el.classList.add("saindo");setTimeout(()=>el.remove(),220)},3200)}
+  window.alert=(mensagem)=>{const txt=String(mensagem??"");toast(txt,/falha|erro|não foi possível|inválid|informe/i.test(txt)?"erro":"ok")};
+  const navBotoes=Array.from(document.querySelectorAll(".sidebar-nav [data-scroll]"));navBotoes.forEach(btn=>btn.addEventListener("click",()=>{const alvo=document.getElementById(btn.dataset.scroll);if(alvo)alvo.scrollIntoView({behavior:"smooth",block:"start"})}));
+  const secoesNav=navBotoes.map(b=>document.getElementById(b.dataset.scroll)).filter(Boolean);if("IntersectionObserver" in window){const observerNav=new IntersectionObserver(entries=>{const visiveis=entries.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio);if(!visiveis.length)return;const id=visiveis[0].target.id;navBotoes.forEach(b=>b.classList.toggle("ativo",b.dataset.scroll===id))},{rootMargin:"-18% 0px -65% 0px",threshold:[0,.1,.3,.6]});secoesNav.forEach(s=>observerNav.observe(s))}
+  const filtroFilaEl=document.getElementById("filtro-fila");function aplicarFiltroFila(){if(!filtroFilaEl)return;const termo=filtroFilaEl.value.trim().toLocaleLowerCase("pt-BR");document.querySelectorAll("#fila-revisao .revisao-card").forEach(card=>{card.style.display=!termo||card.textContent.toLocaleLowerCase("pt-BR").includes(termo)?"":"none"})}filtroFilaEl?.addEventListener("input",aplicarFiltroFila);
+
+  const CHAVE_TOKEN = "central_promocoes_token";
+  let intervalId = null;
+  let abaAtual = "revisao";
+  let categoriasCache = [];
+  let destinosTelegramCache = [];
+  let gruposDestinoCache = [];
+  let vinculosDestinoCache = [];
+  // Mantém edições locais enquanto o painel atualiza em segundo plano.
+  // Sem isso, o refresh de 4s recriava os textareas e desfazia o que estava sendo digitado.
+  const rascunhosEdicao = new Map();
+
+  const telaLogin = document.getElementById("tela-login");
+  const app = document.getElementById("app");
+  const loginErro = document.getElementById("login-erro");
+
+  function getToken() { return localStorage.getItem(CHAVE_TOKEN); }
+  function setToken(t) { localStorage.setItem(CHAVE_TOKEN, t); }
+  function limparToken() { localStorage.removeItem(CHAVE_TOKEN); }
+
+
+  document.addEventListener("visibilitychange", () => {
+    if (!paginaVisivel() || !getToken()) return;
+    carregarPainel();
+    carregarFilaRevisao();
+    carregarStatusLote();
+  });
+
+  async function fazerLogin(email, senha) {
+    loginErro.textContent = "";
+    try {
+      const resp = await fetch(BASE + "/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha }),
+      });
+      const dados = await resp.json();
+      if (!resp.ok) {
+        loginErro.textContent = dados.erro || "Falha ao entrar";
+        return;
+      }
+      setToken(dados.token);
+      iniciarApp();
+    } catch (e) {
+      loginErro.textContent = "Não foi possível conectar ao servidor (" + BASE + ")";
+    }
+  }
+
+  document.getElementById("btn-entrar").addEventListener("click", () => {
+    const email = document.getElementById("input-email").value.trim();
+    const senha = document.getElementById("input-senha").value;
+    if (!email || !senha) { loginErro.textContent = "Preencha email e senha"; return; }
+    fazerLogin(email, senha);
+  });
+  document.getElementById("input-senha").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") document.getElementById("btn-entrar").click();
+  });
+
+  document.getElementById("btn-sair").addEventListener("click", () => {
+    limparToken();
+    if (intervalId) clearInterval(intervalId);
+    app.style.display = "none";
+    telaLogin.style.display = "flex";
+  });
+
+  function iniciarApp() {
+    telaLogin.style.display = "none";
+    app.style.display = "block";
+    carregarPainel();
+    carregarConfiguracaoProcessamento();
+    carregarGruposFonte();
+    carregarGruposDestino();
+    carregarCategoriasERoteamento();
+    carregarFilaRevisao();
+    carregarIgnoradas();
+    carregarStatusLote();
+    intervalId = setInterval(async () => {
+      if (!paginaVisivel() || atualizacaoEmAndamento) return;
+      atualizacaoEmAndamento = true;
+      try {
+        await Promise.all([
+          carregarPainel(),
+          carregarFilaRevisao(),
+          abaAtual === "ignoradas" ? carregarIgnoradas() : Promise.resolve(),
+          carregarStatusLote(),
+        ]);
+      } finally {
+        atualizacaoEmAndamento = false;
+      }
+    }, PAINEL_REFRESH_MS);
+  }
+
+
+  async function carregarConfiguracaoProcessamento() {
+    const token = getToken();
+    if (!token) return;
+    const toggle = document.getElementById("toggle-reescrita-automatica");
+    const estado = document.getElementById("estado-reescrita-automatica");
+    const ajuda = document.getElementById("config-processamento-ajuda");
+    const card = document.getElementById("config-processamento-card");
+    try {
+      const resp = await fetch(BASE + "/mensagens/configuracao-processamento", { headers: { Authorization: "Bearer " + token } });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao carregar configuração");
+      const ativa = dados.reescritaAutomaticaAtiva !== false;
+      toggle.checked = ativa;
+      toggle.disabled = false;
+      estado.textContent = ativa ? "ATIVADA" : "DESATIVADA";
+      card.classList.toggle("desligada", !ativa);
+      ajuda.innerHTML = ativa
+        ? "O bot reorganiza automaticamente título, preço, cupom e link no padrão do grupo. O botão <b>Reescrever no padrão</b> continua disponível para mensagens individuais."
+        : "Modo preservar original: para novas mensagens, o texto do grupo fonte é mantido. O bot altera apenas os links Mercado Livre/Amazon para seus links de afiliado e garante no final <b>Entre nos outros grupos</b> com o Linktree oficial.";
+    } catch (e) {
+      toggle.disabled = true;
+      estado.textContent = "ERRO";
+      ajuda.textContent = e?.message || "Não foi possível carregar a configuração.";
+    }
+  }
+
+  async function alterarReescritaAutomatica() {
+    const toggle = document.getElementById("toggle-reescrita-automatica");
+    const desejado = toggle.checked;
+    toggle.disabled = true;
+    try {
+      const resp = await fetch(BASE + "/mensagens/configuracao-processamento", {
+        method: "PATCH",
+        headers: { Authorization: "Bearer " + getToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ reescritaAutomaticaAtiva: desejado }),
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao alterar configuração");
+      await carregarConfiguracaoProcessamento();
+      toast(desejado ? "Reescrita automática ativada" : "Reescrita automática desativada: mensagem original será preservada", "ok");
+    } catch (e) {
+      toggle.checked = !desejado;
+      toggle.disabled = false;
+      alert(e?.message || "Não foi possível alterar a reescrita automática");
+    }
+  }
+
+  document.getElementById("toggle-reescrita-automatica")?.addEventListener("change", alterarReescritaAutomatica);
+
+  async function carregarGruposFonte() {
+    const token = getToken();
+    if (!token) return;
+    const lista = document.getElementById("lista-fontes");
+    const contador = document.getElementById("fontes-contador");
+    if (!lista || !contador) return;
+
+    try {
+      const resp = await fetch(BASE + "/grupos?tipo=FONTE&plataforma=telegram", {
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (resp.status === 401) return;
+      const dados = await resp.json();
+      if (!resp.ok) throw new Error(dados?.erro || "Falha ao carregar fontes");
+
+      const grupos = Array.isArray(dados) ? dados : [];
+      const ativos = grupos.filter((g) => g.ativo).length;
+      contador.textContent = ativos + " ativa(s) de " + grupos.length;
+
+      if (grupos.length === 0) {
+        lista.innerHTML = '<div class="vazio">nenhum grupo fonte cadastrado</div>';
+        return;
+      }
+
+      lista.innerHTML = grupos.map((g) => `
+        <div class="fonte-linha" data-fonte-id="${escaparHtml(g.id)}">
+          <div>
+            <div class="fonte-nome">${escaparHtml(g.nome || "Sem nome")}</div>
+            <div class="fonte-id">${escaparHtml(g.identificadorExterno || "—")}</div>
+          </div>
+          <div class="fonte-status-badge">${g.ativo ? badge("ativa", "verde") : badge("desativada", "cinza")}</div>
+          <button class="btn-fonte-status ${g.ativo ? "desativar" : "ativar"}" data-id="${escaparHtml(g.id)}" data-ativo-atual="${g.ativo ? "true" : "false"}">
+            ${g.ativo ? "Desativar" : "Ativar"}
+          </button>
+        </div>
+      `).join("");
+
+      lista.querySelectorAll(".btn-fonte-status").forEach((btn) => {
+        btn.addEventListener("click", () => alterarStatusFonte(btn));
+      });
+    } catch (e) {
+      contador.textContent = "erro";
+      lista.innerHTML = '<div class="fontes-erro">Não foi possível carregar os grupos fonte.</div>';
+    }
+  }
+
+  async function alterarStatusFonte(botao) {
+    const id = botao.dataset.id;
+    const ativoAtual = botao.dataset.ativoAtual === "true";
+    const novoAtivo = !ativoAtual;
+    if (!id) return;
+
+    if (ativoAtual) {
+      const linha = botao.closest(".fonte-linha");
+      const nome = linha?.querySelector(".fonte-nome")?.textContent || "este grupo";
+      if (!confirm(`Desativar ${nome}?\n\nNovas mensagens desse grupo deixarão de ser capturadas. O histórico será preservado.`)) return;
+    }
+
+    botao.disabled = true;
+    const textoAnterior = botao.textContent;
+    botao.textContent = novoAtivo ? "Ativando..." : "Desativando...";
+
+    try {
+      const resp = await fetch(BASE + "/grupos/" + encodeURIComponent(id) + "/status", {
+        method: "PATCH",
+        headers: {
+          Authorization: "Bearer " + getToken(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ativo: novoAtivo }),
+      });
+      const dados = resp.status === 204 ? null : await resp.json().catch(() => null);
+      if (!resp.ok) throw new Error(dados?.erro || "Falha ao alterar grupo");
+      await carregarGruposFonte();
+      carregarPainel();
+    } catch (e) {
+      botao.disabled = false;
+      botao.textContent = textoAnterior;
+      alert(e?.message || "Não foi possível alterar o grupo fonte");
+    }
+  }
+
+  async function carregarGruposDestino() {
+    const token = getToken();
+    if (!token) return;
+    const lista = document.getElementById("lista-destinos");
+    const contador = document.getElementById("destinos-contador");
+    if (!lista || !contador) return;
+    try {
+      const [respGrupos, respVinculos] = await Promise.all([
+        fetch(BASE + "/grupos?tipo=DESTINO", { headers: { Authorization: "Bearer " + token } }),
+        fetch(BASE + "/grupos/vinculos-destino", { headers: { Authorization: "Bearer " + token } }),
+      ]);
+      const dadosGrupos = await respGrupos.json().catch(() => []);
+      const dadosVinculos = await respVinculos.json().catch(() => []);
+      if (!respGrupos.ok) throw new Error("Falha ao carregar destinos");
+      if (!respVinculos.ok) throw new Error("Falha ao carregar vínculos");
+      gruposDestinoCache = Array.isArray(dadosGrupos) ? dadosGrupos : [];
+      vinculosDestinoCache = Array.isArray(dadosVinculos) ? dadosVinculos : [];
+      const ativos = gruposDestinoCache.filter((g) => g.ativo).length;
+      contador.textContent = ativos + " ativo(s) de " + gruposDestinoCache.length;
+      renderizarGruposDestino();
+    } catch (e) {
+      contador.textContent = "erro";
+      lista.innerHTML = '<div class="fontes-erro">Não foi possível carregar os grupos destino.</div>';
+    }
+  }
+
+  function renderizarGruposDestino() {
+    const lista = document.getElementById("lista-destinos");
+    if (!lista) return;
+    if (!gruposDestinoCache.length) {
+      lista.innerHTML = '<div class="vazio">nenhum grupo destino cadastrado</div>';
+      return;
+    }
+    const whatsapp = gruposDestinoCache.filter((g) => g.plataforma?.chave === "whatsapp" && g.ativo);
+    lista.innerHTML = gruposDestinoCache.map((g) => {
+      const plataforma = g.plataforma?.chave || "—";
+      const ehTelegram = plataforma === "telegram";
+      const ligados = new Set(vinculosDestinoCache.filter((v) => v.origemId === g.id).map((v) => v.destinoId));
+      const checks = ehTelegram
+        ? (whatsapp.length
+            ? whatsapp.map((w) => `<label><input type="checkbox" class="vinculo-whatsapp-check" data-origem-id="${escaparHtml(g.id)}" value="${escaparHtml(w.id)}" ${ligados.has(w.id) ? "checked" : ""}> ${escaparHtml(w.nome)}</label>`).join("")
+            : '<span>Nenhum destino WhatsApp ativo cadastrado.</span>')
+        : "";
+      return `<div class="destino-linha" data-destino-id="${escaparHtml(g.id)}">
+        <div class="destino-topo">
+          <div><div class="fonte-nome">${escaparHtml(g.nome || "Sem nome")}</div><div class="fonte-id">${escaparHtml(g.identificadorExterno || "—")}</div></div>
+          <span class="destino-plataforma">${escaparHtml(plataforma.toUpperCase())}</span>
+          <button class="btn-fonte-status ${g.ativo ? "desativar" : "ativar"}" data-destino-status-id="${escaparHtml(g.id)}" data-ativo-atual="${g.ativo ? "true" : "false"}">${g.ativo ? "Desativar" : "Ativar"}</button>
+        </div>
+        ${ehTelegram ? `<div class="destino-whatsapp-vinculos">${checks}</div><div class="destino-acoes"><button class="btn-salvar-categoria btn-salvar-vinculos-whatsapp" data-origem-id="${escaparHtml(g.id)}" style="margin:0">Salvar WhatsApp vinculados</button></div>` : ""}
+      </div>`;
+    }).join("");
+    lista.querySelectorAll("[data-destino-status-id]").forEach((btn) => btn.addEventListener("click", () => alterarStatusDestino(btn)));
+    lista.querySelectorAll(".btn-salvar-vinculos-whatsapp").forEach((btn) => btn.addEventListener("click", () => salvarVinculosWhatsapp(btn.dataset.origemId, btn)));
+  }
+
+  async function criarGrupoDestino() {
+    const plataformaChave = document.getElementById("novo-destino-plataforma").value;
+    const nome = document.getElementById("novo-destino-nome").value.trim();
+    const identificadorExterno = document.getElementById("novo-destino-id").value.trim();
+    if (!nome || !identificadorExterno) return alert("Informe nome e identificador do grupo destino");
+    const btn = document.getElementById("btn-criar-destino");
+    btn.disabled = true;
+    try {
+      const resp = await fetch(BASE + "/grupos", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + getToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ plataformaChave, tipo: "DESTINO", identificadorExterno, nome }),
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao cadastrar destino");
+      document.getElementById("novo-destino-nome").value = "";
+      document.getElementById("novo-destino-id").value = "";
+      await carregarGruposDestino();
+      await carregarCategoriasERoteamento(true);
+    } catch (e) {
+      alert(e?.message || "Falha ao cadastrar destino");
+    } finally { btn.disabled = false; }
+  }
+
+  async function alterarStatusDestino(botao) {
+    const id = botao.dataset.destinoStatusId;
+    const ativoAtual = botao.dataset.ativoAtual === "true";
+    if (!id) return;
+    botao.disabled = true;
+    try {
+      const resp = await fetch(BASE + "/grupos/" + encodeURIComponent(id) + "/status", {
+        method: "PATCH",
+        headers: { Authorization: "Bearer " + getToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ ativo: !ativoAtual }),
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao alterar destino");
+      await carregarGruposDestino();
+      await carregarCategoriasERoteamento(true);
+    } catch (e) {
+      alert(e?.message || "Falha ao alterar destino");
+      botao.disabled = false;
+    }
+  }
+
+  async function salvarVinculosWhatsapp(origemId, botao) {
+    const destinoIds = Array.from(document.querySelectorAll(`.vinculo-whatsapp-check[data-origem-id="${origemId}"]:checked`)).map((c) => c.value);
+    botao.disabled = true;
+    const anterior = botao.textContent;
+    botao.textContent = "Salvando...";
+    try {
+      const resp = await fetch(BASE + "/grupos/" + encodeURIComponent(origemId) + "/vinculos-whatsapp", {
+        method: "PUT",
+        headers: { Authorization: "Bearer " + getToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ destinoIds }),
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao salvar vínculos WhatsApp");
+      botao.textContent = "✓ Vínculos salvos";
+      await carregarGruposDestino();
+    } catch (e) {
+      alert(e?.message || "Falha ao salvar vínculos WhatsApp");
+      botao.textContent = anterior;
+    } finally { botao.disabled = false; }
+  }
+
+  function renderizarAbasCategorias() {
+    const abas = document.getElementById("abas-fila");
+    if (!abas) return;
+    const categorias = categoriasCache.filter((c) => c.ativo);
+    const botoesCategorias = categorias.map((c) =>
+      `<button class="aba-btn" data-aba="categoria:${escaparHtml(c.id)}">${escaparHtml(c.nome)}<span class="contagem">${c._count?.mensagens ?? 0}</span></button>`
+    ).join("");
+    abas.innerHTML = `
+      <button class="aba-btn" data-aba="revisao">Todas</button>
+      ${botoesCategorias}
+      <button class="aba-btn" data-aba="sem-categoria">Sem categoria</button>
+      <button class="aba-btn" data-aba="baixa-categoria">Baixa confiança</button>
+      <button class="aba-btn" data-aba="ignoradas">Ignoradas</button>
+    `;
+    if (abaAtual.startsWith("categoria:") && !categorias.some((c) => `categoria:${c.id}` === abaAtual)) abaAtual = "revisao";
+    ligarAbasFila();
+    document.querySelectorAll("#abas-fila .aba-btn").forEach((b) => b.classList.toggle("ativa", b.dataset.aba === abaAtual));
+  }
+
+  async function carregarCategoriasERoteamento(renderizar = true) {
+    const token = getToken();
+    if (!token) return;
+    const foco = document.activeElement;
+    if (!renderizar && foco?.closest?.("#lista-categorias-config")) return;
+
+    try {
+      const [respCategorias, respDestinos] = await Promise.all([
+        fetch(BASE + "/categorias", { headers: { Authorization: "Bearer " + token } }),
+        fetch(BASE + "/grupos?tipo=DESTINO&plataforma=telegram", { headers: { Authorization: "Bearer " + token } }),
+      ]);
+      if (!respCategorias.ok || !respDestinos.ok) return;
+      categoriasCache = await respCategorias.json();
+      destinosTelegramCache = (await respDestinos.json()).filter((g) => g.ativo);
+      renderizarAbasCategorias();
+      if (renderizar || !document.querySelector("#lista-categorias-config .categoria-config-linha")) renderizarConfiguracaoCategorias();
+    } catch {}
+  }
+
+  function renderizarConfiguracaoCategorias() {
+    const container = document.getElementById("lista-categorias-config");
+    if (!container) return;
+    if (!categoriasCache.length) {
+      container.innerHTML = '<div class="vazio">nenhuma categoria cadastrada</div>';
+      return;
+    }
+    container.innerHTML = categoriasCache.map((c) => {
+      const selecionados = new Set((c.destinos || []).map((d) => d.grupoDestinoId));
+      const destinos = destinosTelegramCache.length
+        ? destinosTelegramCache.map((g) => `<label><input type="checkbox" class="destino-categoria-check" data-categoria-id="${escaparHtml(c.id)}" value="${escaparHtml(g.id)}" ${selecionados.has(g.id) ? "checked" : ""}> ${escaparHtml(g.nome)}</label>`).join("")
+        : '<span style="color:var(--amber)">Nenhum grupo Telegram DESTINO ativo cadastrado.</span>';
+      return `
+        <div class="categoria-config-linha">
+          <div class="categoria-config-topo">
+            <div>
+              <div class="categoria-config-nome">${escaparHtml(c.nome)}</div>
+              <div class="fontes-ajuda">${escaparHtml(c.descricao || "")}</div>
+            </div>
+            <span class="categoria-chip">${c._count?.mensagens ?? 0} mensagem(ns)</span>
+          </div>
+          <div class="categoria-regra-grid">
+            <input type="text" class="categoria-palavras" data-categoria-id="${escaparHtml(c.id)}" value="${escaparHtml((c.palavrasChave || []).join(', '))}" placeholder="palavras-chave" />
+            <input type="number" min="0" max="100" class="categoria-limiar" data-categoria-id="${escaparHtml(c.id)}" value="${Number(c.limiarConfianca ?? 60)}" title="Confiança mínima da categoria" />
+            <label style="font-size:11px;color:var(--text-dim);"><input type="checkbox" class="categoria-ativa" data-categoria-id="${escaparHtml(c.id)}" ${c.ativo ? "checked" : ""}> ativa</label>
+          </div>
+          <div class="categoria-destinos">${destinos}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-salvar-categoria btn-salvar-regras" data-categoria-id="${escaparHtml(c.id)}">Salvar regras</button>
+            <button class="btn-salvar-categoria btn-salvar-destinos" data-categoria-id="${escaparHtml(c.id)}">Salvar destinos</button>
+          </div>
+        </div>`;
+    }).join("");
+    container.querySelectorAll(".btn-salvar-destinos").forEach((btn) => {
+      btn.addEventListener("click", () => salvarDestinosCategoria(btn.dataset.categoriaId, btn));
+    });
+    container.querySelectorAll(".btn-salvar-regras").forEach((btn) => {
+      btn.addEventListener("click", () => salvarRegrasCategoria(btn.dataset.categoriaId, btn));
+    });
+  }
+
+  function listaPalavras(valor) {
+    return String(valor || "").split(",").map((v) => v.trim()).filter(Boolean);
+  }
+
+  async function criarCategoria() {
+    const nome = document.getElementById("nova-categoria-nome").value.trim();
+    const palavrasChave = listaPalavras(document.getElementById("nova-categoria-palavras").value);
+    if (!nome) return alert("Informe o nome da categoria");
+    const btn = document.getElementById("btn-criar-categoria");
+    btn.disabled = true;
+    try {
+      const resp = await fetch(BASE + "/categorias", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + getToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ nome, palavrasChave, limiarConfianca: 60 }),
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao criar categoria");
+      document.getElementById("nova-categoria-nome").value = "";
+      document.getElementById("nova-categoria-palavras").value = "";
+      await carregarCategoriasERoteamento(true);
+    } catch (e) {
+      alert(e?.message || "Falha ao criar categoria");
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function salvarRegrasCategoria(categoriaId, botao) {
+    const palavrasEl = document.querySelector(`.categoria-palavras[data-categoria-id="${categoriaId}"]`);
+    const limiarEl = document.querySelector(`.categoria-limiar[data-categoria-id="${categoriaId}"]`);
+    const ativoEl = document.querySelector(`.categoria-ativa[data-categoria-id="${categoriaId}"]`);
+    const palavrasChave = listaPalavras(palavrasEl?.value);
+    const limiarConfianca = Math.max(0, Math.min(100, Number(limiarEl?.value || 60)));
+    const ativo = Boolean(ativoEl?.checked);
+    const anterior = botao.textContent;
+    botao.disabled = true;
+    botao.textContent = "Salvando...";
+    try {
+      const resp = await fetch(BASE + "/categorias/" + encodeURIComponent(categoriaId), {
+        method: "PATCH",
+        headers: { Authorization: "Bearer " + getToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ palavrasChave, limiarConfianca, ativo }),
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao salvar regras");
+      botao.textContent = "✓ Regras salvas";
+      await carregarCategoriasERoteamento(true);
+    } catch (e) {
+      alert(e?.message || "Falha ao salvar regras da categoria");
+      botao.textContent = anterior;
+    } finally {
+      botao.disabled = false;
+    }
+  }
+
+  async function salvarDestinosCategoria(categoriaId, botao) {
+    const checks = Array.from(document.querySelectorAll(`.destino-categoria-check[data-categoria-id="${categoriaId}"]:checked`));
+    const grupoDestinoIds = checks.map((c) => c.value);
+    botao.disabled = true;
+    const anterior = botao.textContent;
+    botao.textContent = "Salvando...";
+    try {
+      const resp = await fetch(BASE + "/categorias/" + encodeURIComponent(categoriaId) + "/destinos", {
+        method: "PUT",
+        headers: { Authorization: "Bearer " + getToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ grupoDestinoIds }),
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao salvar destinos");
+      botao.textContent = "✓ Salvo";
+      setTimeout(() => { if (botao.isConnected) botao.textContent = anterior; }, 1200);
+      await carregarCategoriasERoteamento(false);
+      carregarPainel();
+    } catch (e) {
+      alert(e?.message || "Falha ao salvar destinos da categoria");
+      botao.textContent = anterior;
+    } finally {
+      botao.disabled = false;
+    }
+  }
+
+  function categoriasMensagem(mensagem) {
+    return Array.isArray(mensagem?.categorias) ? mensagem.categorias : [];
+  }
+
+  function htmlCategoriasMensagem(mensagem) {
+    const atuais = categoriasMensagem(mensagem);
+    const chips = atuais.length
+      ? atuais.map((mc) => {
+          const baixa = Number(mc.confianca) < 70;
+          const manual = mc.origem === "MANUAL";
+          return `<span class="categoria-chip ${manual ? "manual" : baixa ? "baixa" : ""}" title="${manual ? "confirmada manualmente" : "classificação automática"}">${mc.principal ? "★ " : ""}${escaparHtml(mc.categoria?.nome || "Categoria")} ${mc.confianca}%</span>`;
+        }).join("")
+      : '<span class="categoria-chip baixa">SEM CATEGORIA</span>';
+
+    const idsAtuais = new Set(atuais.map((mc) => mc.categoriaId));
+    const checks = categoriasCache.filter((c) => c.ativo).map((c) =>
+      `<label><input type="checkbox" class="categoria-mensagem-check" data-mensagem-id="${escaparHtml(mensagem.id)}" value="${escaparHtml(c.id)}" ${idsAtuais.has(c.id) ? "checked" : ""}> ${escaparHtml(c.nome)}</label>`
+    ).join("");
+
+    return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px;">${chips}</div>
+      <div class="categorias-mensagem">${checks}<button class="btn-salvar-categoria btn-categoria-mensagem" data-id="${escaparHtml(mensagem.id)}" style="margin:0">Salvar categoria</button></div>`;
+  }
+
+  async function salvarCategoriasMensagem(id, botao) {
+    const checks = Array.from(document.querySelectorAll(`.categoria-mensagem-check[data-mensagem-id="${id}"]:checked`));
+    const categoriaIds = checks.map((c) => c.value);
+    botao.disabled = true;
+    const anterior = botao.textContent;
+    botao.textContent = "Salvando...";
+    try {
+      const resp = await fetch(BASE + "/mensagens/" + encodeURIComponent(id) + "/categorias", {
+        method: "PUT",
+        headers: { Authorization: "Bearer " + getToken(), "Content-Type": "application/json" },
+        body: JSON.stringify({ categoriaIds, principalId: categoriaIds[0] || null }),
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao salvar categoria");
+      botao.textContent = "✓ Categoria salva";
+      rascunhosEdicao.delete(id);
+      await carregarCategoriasERoteamento(false);
+      carregarFilaRevisao();
+      carregarPainel();
+    } catch (e) {
+      alert(e?.message || "Falha ao salvar categoria");
+      botao.textContent = anterior;
+    } finally {
+      botao.disabled = false;
+    }
+  }
+
+  async function carregarPainel() {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const resp = await fetch(BASE + "/monitoramento/painel", {
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (resp.status === 401) {
+        limparToken();
+        if (intervalId) clearInterval(intervalId);
+        app.style.display = "none";
+        telaLogin.style.display = "flex";
+        loginErro.textContent = "Sessão expirada, entre novamente";
+        return;
+      }
+      const dados = await resp.json();
+      renderizarPainel(dados);
+      document.getElementById("txt-atualizado").textContent =
+        "atualizado " + new Date().toLocaleTimeString("pt-BR");
+    } catch (e) {
+      document.getElementById("txt-atualizado").textContent = "erro ao atualizar (servidor offline?)";
+    }
+  }
+
+  function nomeArquivo(caminho) {
+    if (!caminho) return "";
+    return caminho.split(/[\\/]/).pop();
+  }
+
+  function escaparHtml(valor) {
+    return String(valor ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function falhasDeConversao(mensagem) {
+    const logs = Array.isArray(mensagem?.logs) ? mensagem.logs : [];
+    const falhas = [];
+
+    for (const log of logs) {
+      if (!["afiliado_mercado_livre", "afiliado_amazon"].includes(log.etapa) || log.status !== "ERRO" || !log.detalhe) continue;
+      try {
+        const d = JSON.parse(log.detalhe);
+        if (d?.linkOriginal) falhas.push({ ...d, etapa: log.etapa });
+      } catch {}
+    }
+
+    return falhas;
+  }
+
+  function htmlFalhasConversao(mensagem) {
+    const falhas = falhasDeConversao(mensagem);
+    if (!falhas.length) return "";
+
+    const linhas = falhas.map((f) => `
+      <div class="link-original-linha">
+        <span>${escaparHtml(f.linkOriginal)}</span>
+        <span class="link-original-badge">(LINK ORIGINAL)</span>
+        <span class="link-original-erro">${f.etapa === "afiliado_amazon" ? "Amazon" : "Mercado Livre"}: ${escaparHtml(f.erro || "erro de conversão")}</span>
+      </div>
+    `).join("");
+
+    return `<div class="links-originais-alerta"><strong>⚠ Link não convertido — revise antes de publicar</strong>${linhas}</div>`;
+  }
+
+  function extrairLinksDoTexto(texto) {
+    const bruto = String(texto ?? "");
+    const links = [];
+
+    // Primeiro captura URLs de links Markdown: [texto](https://...)
+    const markdown = /\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/gi;
+    let match;
+    while ((match = markdown.exec(bruto)) !== null) links.push(match[1]);
+
+    // Depois captura URLs escritas diretamente.
+    const diretos = /https?:\/\/[^\s<>"']+/gi;
+    while ((match = diretos.exec(bruto)) !== null) {
+      const limpo = match[0].replace(/[\]\),.!?;:}>]+$/g, "");
+      links.push(limpo);
+    }
+
+    return [...new Set(links)];
+  }
+
+  function linkPermitidoNoPainel(url) {
+    try {
+      const u = new URL(url);
+      const host = u.hostname.toLowerCase();
+      const temCodigo = u.pathname.split("/").filter(Boolean).length >= 1;
+      return temCodigo && (
+        (u.protocol === "https:" && host === "meli.la") ||
+        (u.protocol === "https:" && host === "link.amazon") ||
+        (u.protocol === "https:" && host === "linktr.ee" && u.pathname.replace(/\/+$/, "") === "/promocoesdobigode")
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function linksInesperadosNoTexto(texto) {
+    return extrairLinksDoTexto(texto).filter((url) => !linkPermitidoNoPainel(url));
+  }
+
+  function linkCompraPermitido(url) {
+    try {
+      const u = new URL(url);
+      const host = u.hostname.toLowerCase();
+      const temCodigo = u.pathname.split("/").filter(Boolean).length >= 1;
+      return temCodigo && u.protocol === "https:" && (host === "meli.la" || host === "link.amazon");
+    } catch {
+      return false;
+    }
+  }
+
+  function problemaLinkCompra(texto) {
+    const bruto = String(texto ?? "");
+    const linhaCompra = bruto.split(/\r?\n/).find((linha) => /(?:🛒\s*)?Compre aqui\s*:/i.test(linha));
+    if (!linhaCompra) return null;
+
+    if (/LINK\s+N[ÃA]O\s+IDENTIFICADO/i.test(linhaCompra)) {
+      return { tipo: "nao-identificado", valor: "LINK NÃO IDENTIFICADO" };
+    }
+
+    const matchUrl = linhaCompra.match(/https?:\/\/[^\s<>'"]+/i);
+    if (!matchUrl) {
+      return { tipo: "ausente", valor: linhaCompra.trim() };
+    }
+
+    const url = matchUrl[0].replace(/[\]\),.!?;:}>]+$/g, "");
+    if (!linkCompraPermitido(url)) {
+      return { tipo: "invalido", valor: url };
+    }
+
+    return null;
+  }
+
+  function htmlLinksInesperados(texto) {
+    const links = linksInesperadosNoTexto(texto);
+    const problemaCompra = problemaLinkCompra(texto);
+    if (!links.length && !problemaCompra) return "";
+
+    const blocos = [];
+
+    if (problemaCompra) {
+      const detalhe = problemaCompra.tipo === "nao-identificado"
+        ? "O formatador não conseguiu identificar um link de compra."
+        : problemaCompra.tipo === "ausente"
+          ? "A linha ‘Compre aqui’ não contém um link válido."
+          : `Link de compra inválido: <b>${escaparHtml(problemaCompra.valor)}</b>`;
+      blocos.push(`<div class="link-inesperado-linha">🚫 ${detalhe}</div>`);
+    }
+
+    for (const url of links) {
+      blocos.push(`<div class="link-inesperado-linha">🚫 ${escaparHtml(url)}</div>`);
+    }
+
+    return `<div class="links-inesperados-alerta"><strong>🚨 ATENÇÃO: link de compra inválido ou fora do padrão</strong><div>Em <b>🛒 Compre aqui:</b>, somente <b>https://meli.la/...</b> ou <b>https://link.amazon/...</b> são aceitos. O rodapé <b>linktr.ee/promocoesdobigode</b> continua permitido.</div>${blocos.join("")}</div>`;
+  }
+
+  function temAlertaLink(texto) {
+    return linksInesperadosNoTexto(texto).length > 0 || Boolean(problemaLinkCompra(texto));
+  }
+
+  function atualizarAlertaLinksNoCard(textarea) {
+    const card = textarea?.closest(".revisao-card");
+    if (!card) return;
+    const alvo = card.querySelector(".alerta-links-inesperados-slot");
+    const temAlerta = temAlertaLink(textarea.value);
+    card.classList.toggle("com-link-inesperado", temAlerta);
+    if (alvo) alvo.innerHTML = htmlLinksInesperados(textarea.value);
+  }
+
+
+
+  function invalidarFila() {
+    ultimaAssinaturaFila = "";
+    ultimaAbaAssinatura = "";
+  }
+
+  async function carregarFilaRevisao({ forcar = false } = {}) {
+    const token = getToken();
+    if (!token || filaEmAndamento) return;
+
+    // Não recria a fila enquanto o usuário está digitando.
+    const ativo = document.activeElement;
+    if (!forcar && ativo?.classList?.contains("revisao-texto")) return;
+
+    filaEmAndamento = true;
+    try {
+      let urlFila = BASE + "/mensagens?status=AGUARDANDO_REVISAO";
+      if (abaAtual.startsWith("categoria:")) urlFila += "&categoriaId=" + encodeURIComponent(abaAtual.split(":")[1]);
+      if (abaAtual === "sem-categoria") urlFila += "&semCategoria=true";
+      if (abaAtual === "baixa-categoria") urlFila += "&baixaConfiancaCategoria=true";
+
+      const resp = await fetch(urlFila, {
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (!resp.ok) return;
+
+      const mensagens = await resp.json();
+      const assinatura = assinaturaFila(mensagens);
+      const assinaturaAba = abaAtual;
+
+      // A maior fonte de travadas era reconstruir todos os cards a cada polling,
+      // mesmo quando nada havia mudado.
+      if (!forcar && assinatura === ultimaAssinaturaFila && assinaturaAba === ultimaAbaAssinatura) {
+        return;
+      }
+
+      ultimaAssinaturaFila = assinatura;
+      ultimaAbaAssinatura = assinaturaAba;
+      renderizarFilaRevisao(mensagens);
+    } catch (e) {
+      // silencioso — a fila de revisão não deve travar o resto do painel
+    } finally {
+      filaEmAndamento = false;
+    }
+  }
+
+  function renderizarFilaRevisao(mensagens) {
+    const container = document.getElementById("fila-revisao");
+
+    if (!mensagens || mensagens.length === 0) {
+      container.innerHTML = '<div class="card"><div class="vazio">nenhuma mensagem aguardando revisão</div></div>';
+      return;
+    }
+
+    container.innerHTML = mensagens
+      .map((m) => {
+        const midias = m.midias || [];
+        const imagem = midias.find((md) => md.tipo === "imagem");
+        const textoServidor = m.conteudoProcessado ?? m.conteudoOriginal ?? "";
+        const textoAtual = rascunhosEdicao.has(m.id) ? rascunhosEdicao.get(m.id) : textoServidor;
+        const texto = escaparHtml(textoAtual);
+        const falhasConversao = falhasDeConversao(m);
+        const alertaLinksOriginais = htmlFalhasConversao(m);
+        const temAlertaLinks = temAlertaLink(textoAtual);
+        const alertaLinksInesperados = htmlLinksInesperados(textoAtual);
+        const confianca = Number.isFinite(Number(m.confianca)) ? Number(m.confianca) : null;
+        const classeConfianca = confianca === null ? "baixa" : confianca >= 95 ? "alta" : confianca >= 70 ? "media" : "baixa";
+        return `
+          <div class="card revisao-card ${falhasConversao.length ? "com-falha-link" : ""} ${temAlertaLinks ? "com-link-inesperado" : ""}">
+            <div class="card-topo">
+              <div class="card-titulo">${m.grupoFonte?.nome || "—"}</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span class="confianca-badge ${classeConfianca}" title="Confiança calculada pelos campos essenciais detectados">${confianca === null ? "sem nota" : `confiança ${confianca}%`}</span>
+                <span class="valor" style="font-size:11px;">${tempoRelativo(m.criadoEm)}</span>
+              </div>
+            </div>
+            ${imagem ? `<img class="revisao-imagem" src="/midias/${nomeArquivo(imagem.referencia)}" onerror="this.style.display='none'" />` : ""}
+            ${htmlCategoriasMensagem(m)}
+            <textarea class="revisao-texto" data-id="${m.id}" rows="5">${texto}</textarea>
+            ${alertaLinksOriginais}
+            <div class="alerta-links-inesperados-slot">${alertaLinksInesperados}</div>
+            <div class="revisao-acoes">
+              <button class="btn-revisao btn-formatar" data-id="${m.id}">🧹 Reescrever no padrão</button>
+              <button class="btn-revisao btn-publicar" data-id="${m.id}">Publicar</button>
+              <button class="btn-revisao btn-descartar" data-id="${m.id}">Descartar</button>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+
+    container.querySelectorAll(".revisao-texto").forEach((textarea) => {
+      textarea.addEventListener("input", () => {
+        rascunhosEdicao.set(textarea.dataset.id, textarea.value);
+        atualizarAlertaLinksNoCard(textarea);
+      });
+    });
+
+    container.querySelectorAll(".btn-formatar").forEach((btn) => {
+      btn.addEventListener("click", () => reescreverMensagemNoPadrao(btn.dataset.id, btn));
+    });
+    aplicarFiltroFila();
+
+    container.querySelectorAll(".btn-categoria-mensagem").forEach((btn) => {
+      btn.addEventListener("click", () => salvarCategoriasMensagem(btn.dataset.id, btn));
+    });
+    container.querySelectorAll(".btn-publicar").forEach((btn) => {
+      btn.addEventListener("click", () => publicarMensagem(btn.dataset.id, btn));
+    });
+    container.querySelectorAll(".btn-descartar").forEach((btn) => {
+      btn.addEventListener("click", () => descartarMensagem(btn.dataset.id, btn));
+    });
+  }
+
+  async function reescreverMensagemNoPadrao(id, botao) {
+    const token = getToken();
+    const textarea = document.querySelector('.revisao-texto[data-id="' + id + '"]');
+    const texto = textarea ? textarea.value : "";
+    if (!texto.trim()) return;
+
+    botao.disabled = true;
+    botao.textContent = "Formatando...";
+    try {
+      const resp = await fetch(BASE + "/mensagens/" + id + "/formatar", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ texto }),
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao formatar a mensagem");
+
+      const novoTexto = dados.conteudoProcessado || dados.formatacao?.texto || texto;
+      if (textarea) {
+        textarea.value = novoTexto;
+        rascunhosEdicao.set(id, novoTexto);
+        atualizarAlertaLinksNoCard(textarea);
+      }
+      botao.textContent = "✓ Reescrita";
+      setTimeout(() => { if (botao.isConnected) botao.textContent = "🧹 Reescrever no padrão"; }, 1200);
+    } catch (e) {
+      alert(e?.message || "Falha ao reescrever no padrão");
+      botao.textContent = "🧹 Reescrever no padrão";
+    } finally {
+      botao.disabled = false;
+    }
+  }
+
+  async function publicarMensagem(id, botao) {
+    const token = getToken();
+    const textarea = document.querySelector('.revisao-texto[data-id="' + id + '"]');
+    const texto = textarea ? textarea.value : undefined;
+
+    botao.disabled = true;
+    botao.textContent = "Publicando...";
+    try {
+      if (texto !== undefined) {
+        const respEdicao = await fetch(BASE + "/mensagens/" + id, {
+          method: "PATCH",
+          headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify({ conteudoProcessado: texto }),
+        });
+        if (!respEdicao.ok) throw new Error("Falha ao salvar a edição");
+        rascunhosEdicao.delete(id);
+      }
+      const respPublicacao = await fetch(BASE + "/mensagens/" + id + "/publicar", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+      });
+      const dadosPublicacao = await respPublicacao.json().catch(() => ({}));
+      if (!respPublicacao.ok) throw new Error(dadosPublicacao.erro || "Falha ao publicar a mensagem");
+    } catch (e) {
+      alert(e?.message || "Falha ao publicar a mensagem");
+    }
+    carregarFilaRevisao();
+    carregarPainel();
+  }
+
+  async function descartarMensagem(id, botao) {
+    const token = getToken();
+    botao.disabled = true;
+    botao.textContent = "Descartando...";
+    try {
+      const resp = await fetch(BASE + "/mensagens/" + id + "/descartar", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (resp.ok) rascunhosEdicao.delete(id);
+    } catch (e) {}
+    carregarFilaRevisao();
+  }
+
+  async function carregarStatusLote() {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const resp = await fetch(BASE + "/mensagens/publicacao-lote", {
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (!resp.ok) return;
+      const estado = await resp.json();
+      const el = document.getElementById("status-publicacao-lote");
+      const btn = document.getElementById("btn-publicar-tudo");
+      const btnExcluir = document.getElementById("btn-excluir-tudo");
+      btn.disabled = Boolean(estado.emAndamento);
+      btnExcluir.disabled = Boolean(estado.emAndamento);
+      if (estado.emAndamento) {
+        el.textContent = `publicando ${estado.processadas}/${estado.total} · ${estado.publicadas} ok · ${estado.falhas} falha(s)`;
+      } else if (estado.finalizadaEm) {
+        el.textContent = `último lote: ${estado.publicadas}/${estado.total} publicadas · ${estado.falhas} falha(s)`;
+      } else {
+        el.textContent = "";
+      }
+    } catch {}
+  }
+
+  async function reclassificarFila() {
+    const btn = document.getElementById("btn-reclassificar-fila");
+    btn.disabled = true;
+    const anterior = btn.textContent;
+    btn.textContent = "Classificando...";
+    try {
+      const resp = await fetch(BASE + "/mensagens/reclassificar-pendentes", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + getToken() },
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(dados.erro || "Falha ao reclassificar fila");
+      btn.textContent = `✓ ${dados.classificadas || 0} classificadas`;
+      await carregarCategoriasERoteamento(true);
+      carregarFilaRevisao();
+      carregarPainel();
+    } catch (e) {
+      alert(e?.message || "Falha ao reclassificar fila");
+      btn.textContent = anterior;
+    } finally {
+      setTimeout(() => { if (btn.isConnected) btn.textContent = anterior; }, 1500);
+      btn.disabled = false;
+    }
+  }
+
+  function filtroAbaAtual() {
+    if (abaAtual.startsWith("categoria:")) return { categoriaId: abaAtual.split(":")[1] };
+    if (abaAtual === "sem-categoria") return { semCategoria: true };
+    if (abaAtual === "baixa-categoria") return { baixaConfiancaCategoria: true };
+    return {};
+  }
+
+  function nomeAbaAtual() {
+    if (abaAtual.startsWith("categoria:")) {
+      const id = abaAtual.split(":")[1];
+      return categoriasCache.find((c) => c.id === id)?.nome || "categoria";
+    }
+    if (abaAtual === "sem-categoria") return "Sem categoria";
+    if (abaAtual === "baixa-categoria") return "Baixa confiança";
+    return "Todas";
+  }
+
+  async function publicarTudo() {
+    const filtro = filtroAbaAtual();
+    if (!confirm(`Publicar todas as mensagens da aba “${nomeAbaAtual()}”, uma por vez, com 30 segundos entre elas?`)) return;
+    const token = getToken();
+    const btn = document.getElementById("btn-publicar-tudo");
+    btn.disabled = true;
+    try {
+      // Salva primeiro qualquer edição ainda aberta nos textareas.
+      const edicoes = Array.from(document.querySelectorAll(".revisao-texto"));
+      for (const textarea of edicoes) {
+        const respEdicao = await fetch(BASE + "/mensagens/" + textarea.dataset.id, {
+          method: "PATCH",
+          headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify({ conteudoProcessado: textarea.value }),
+        });
+        if (!respEdicao.ok) throw new Error("Falha ao salvar uma edição antes da publicação em lote");
+      }
+
+      const resp = await fetch(BASE + "/mensagens/publicar-todas", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify(filtro),
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) alert(dados.erro || "Não foi possível iniciar a publicação em lote");
+    } catch (erro) {
+      alert(erro?.message || "Falha ao conectar ao servidor");
+    }
+    carregarStatusLote();
+    carregarFilaRevisao();
+  }
+
+  async function excluirTudoRevisao() {
+    const filtro = filtroAbaAtual();
+    if (!confirm(`Excluir permanentemente todas as mensagens da aba “${nomeAbaAtual()}”? Essa ação não pode ser desfeita.`)) return;
+    const token = getToken();
+    const qs = filtro.categoriaId
+      ? `?categoriaId=${encodeURIComponent(filtro.categoriaId)}`
+      : filtro.semCategoria
+        ? "?semCategoria=true"
+        : filtro.baixaConfiancaCategoria
+          ? "?baixaConfiancaCategoria=true"
+          : "";
+    try {
+      const resp = await fetch(BASE + "/mensagens/revisao" + qs, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token },
+      });
+      const dados = await resp.json().catch(() => ({}));
+      if (!resp.ok) return alert(dados.erro || "Falha ao excluir a fila");
+    } catch {
+      return alert("Falha ao conectar ao servidor");
+    }
+    carregarFilaRevisao();
+    carregarPainel();
+  }
+
+  async function carregarIgnoradas() {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const resp = await fetch(BASE + "/mensagens/ignoradas?limite=200", {
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (!resp.ok) return;
+      renderizarIgnoradas(await resp.json());
+    } catch {}
+  }
+
+  function renderizarIgnoradas(mensagens) {
+    const container = document.getElementById("lista-ignoradas");
+    if (!mensagens || mensagens.length === 0) {
+      container.innerHTML = '<div class="card"><div class="vazio">nenhuma mensagem ignorada registrada</div></div>';
+      return;
+    }
+
+    container.innerHTML = mensagens.map((m) => `
+      <div class="card ignorada-card">
+        <div class="ignorada-motivo">⚠ ${escaparHtml(m.motivo)}</div>
+        <div class="ignorada-meta">${tempoRelativo(m.criadoEm)} · ${escaparHtml(m.grupoFonte?.nome || m.identificadorChat || m.plataforma || "—")} ${m.idExternoOriginal ? "· msg " + escaparHtml(m.idExternoOriginal) : ""}</div>
+        <div class="ignorada-conteudo">${escaparHtml(m.conteudo || "(sem texto)")}</div>
+      </div>
+    `).join("");
+  }
+
+  async function excluirIgnoradas() {
+    if (!confirm("Excluir permanentemente todas as mensagens ignoradas registradas?")) return;
+    const token = getToken();
+    try {
+      const resp = await fetch(BASE + "/mensagens/ignoradas", {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + token },
+      });
+      if (!resp.ok) return alert("Falha ao excluir mensagens ignoradas");
+    } catch {
+      return alert("Falha ao conectar ao servidor");
+    }
+    carregarIgnoradas();
+    carregarPainel();
+  }
+
+  function selecionarAba(nome) {
+    abaAtual = nome;
+    const ignoradas = nome === "ignoradas";
+    document.getElementById("aba-revisao").style.display = ignoradas ? "none" : "block";
+    document.getElementById("aba-ignoradas").style.display = ignoradas ? "block" : "none";
+    document.querySelectorAll("#abas-fila .aba-btn").forEach((b) => b.classList.toggle("ativa", b.dataset.aba === nome));
+    const btnPublicarTudo = document.getElementById("btn-publicar-tudo");
+    const btnExcluirTudo = document.getElementById("btn-excluir-tudo");
+    if (btnPublicarTudo) btnPublicarTudo.textContent = nome === "revisao" ? "Publicar tudo (30s)" : `Publicar aba: ${nomeAbaAtual()}`;
+    if (btnExcluirTudo) btnExcluirTudo.textContent = nome === "revisao" ? "Excluir tudo" : `Excluir aba: ${nomeAbaAtual()}`;
+    if (ignoradas) carregarIgnoradas();
+    else carregarFilaRevisao();
+  }
+
+  function ligarAbasFila() {
+    document.querySelectorAll("#abas-fila .aba-btn").forEach((btn) => {
+      btn.addEventListener("click", () => selecionarAba(btn.dataset.aba));
+    });
+  }
+
+  document.getElementById("btn-publicar-tudo").addEventListener("click", publicarTudo);
+  document.getElementById("btn-reclassificar-fila").addEventListener("click", reclassificarFila);
+  document.getElementById("btn-excluir-tudo").addEventListener("click", excluirTudoRevisao);
+  document.getElementById("btn-excluir-ignoradas").addEventListener("click", excluirIgnoradas);
+  document.getElementById("btn-criar-categoria").addEventListener("click", criarCategoria);
+  document.getElementById("btn-criar-destino").addEventListener("click", criarGrupoDestino);
+  ligarAbasFila();
+
+  function tempoRelativo(dataIso) {
+    if (!dataIso) return "nunca";
+    const diffMs = Date.now() - new Date(dataIso).getTime();
+    const s = Math.floor(diffMs / 1000);
+    if (s < 5) return "agora mesmo";
+    if (s < 60) return s + "s atrás";
+    const m = Math.floor(s / 60);
+    if (m < 60) return m + "min atrás";
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + "h atrás";
+    return Math.floor(h / 24) + "d atrás";
+  }
+
+  function badge(texto, cor) {
+    return '<span class="badge ' + cor + '">' + texto + "</span>";
+  }
+
+  function acharStatusDb(statusIntegracoes, servico) {
+    return statusIntegracoes.find((s) => s.servico === servico) || null;
+  }
+
+  function renderizarPainel(dados) {
+    const { statusIntegracoes, runtime, resumo, ultimasMensagens, categoriasResumo } = dados;
+
+    // ---------- Banner geral ----------
+    const problemas = [];
+    const userbotOk = runtime.userbot.conectado;
+    const botOk = acharStatusDb(statusIntegracoes, "telegram_bot")?.conectado ?? runtime.botTelegram.conectado;
+    const semFontes = runtime.userbot.totalFontesAtivas === 0;
+
+    if (!userbotOk) problemas.push("Userbot Telegram desconectado");
+    if (runtime.userbot.erro) problemas.push("Userbot: " + runtime.userbot.erro);
+    if (!botOk) problemas.push("Bot Telegram (publicador) com problema");
+    if (semFontes) problemas.push("Nenhuma fonte ativa cadastrada — nenhuma mensagem será processada");
+
+    const banner = document.getElementById("banner-geral");
+    if (problemas.length === 0) {
+      banner.className = "banner ok";
+      banner.innerHTML = "✓ Tudo funcionando normalmente";
+    } else {
+      banner.className = "banner problema";
+      banner.innerHTML = "⚠ " + problemas.length + " problema(s) detectado(s): " + problemas.join(" · ");
+    }
+
+    // ---------- Cards de serviço ----------
+    const grid = document.getElementById("grid-servicos");
+    grid.innerHTML = "";
+
+    // --- Userbot Telegram ---
+    let statusLeituraBadge, statusLeituraTexto;
+    if (!userbotOk) {
+      statusLeituraBadge = badge("desconectado", "vermelho");
+    } else if (semFontes) {
+      statusLeituraBadge = badge("nenhuma fonte", "amarelo");
+    } else if (runtime.userbot.ultimaMensagemLidaEm && (Date.now() - new Date(runtime.userbot.ultimaMensagemLidaEm).getTime()) < 5 * 60 * 1000) {
+      statusLeituraBadge = badge("lendo", "verde");
+    } else {
+      statusLeituraBadge = badge("aguardando", "cinza");
+    }
+
+    grid.innerHTML += `
+      <div class="card">
+        <div class="card-topo">
+          <div class="card-titulo">Userbot Telegram</div>
+          ${userbotOk ? badge("conectado", "verde") : badge("desconectado", "vermelho")}
+        </div>
+        <div class="linha-info"><span class="label">Atividade</span><span class="valor">${statusLeituraBadge}</span></div>
+        <div class="linha-info"><span class="label">Fontes ativas cadastradas</span><span class="valor ${semFontes ? "destaque-amarelo" : ""}">${runtime.userbot.totalFontesAtivas}</span></div>
+        <div class="linha-info"><span class="label">Mensagens lidas</span><span class="valor destaque-verde">${runtime.userbot.totalMensagensLidas}</span></div>
+        <div class="linha-info"><span class="label">Última lida</span><span class="valor">${tempoRelativo(runtime.userbot.ultimaMensagemLidaEm)}</span></div>
+        <div class="linha-info"><span class="label">Mensagens ignoradas</span><span class="valor ${runtime.userbot.totalMensagensIgnoradas > 0 ? "destaque-amarelo" : ""}">${runtime.userbot.totalMensagensIgnoradas}</span></div>
+        <div class="linha-info"><span class="label">Último motivo ignorada</span><span class="valor">${runtime.userbot.ultimoMotivoIgnorada || "—"}</span></div>
+        ${runtime.userbot.erro ? `<div class="erro-detalhe">${runtime.userbot.erro}</div>` : ""}
+      </div>
+    `;
+
+    // --- Bot Telegram (publicador) ---
+    const statusBotDb = acharStatusDb(statusIntegracoes, "telegram_bot");
+    const botConectado = statusBotDb ? statusBotDb.conectado : runtime.botTelegram.conectado;
+    const botErro = statusBotDb?.detalhe || runtime.botTelegram.erro;
+    grid.innerHTML += `
+      <div class="card">
+        <div class="card-topo">
+          <div class="card-titulo">Bot Telegram (publicador)</div>
+          ${botConectado ? badge("conectado", "verde") : badge("com problema", "vermelho")}
+        </div>
+        <div class="linha-info"><span class="label">Usuário</span><span class="valor">${runtime.botTelegram.username ? "@" + runtime.botTelegram.username : "—"}</span></div>
+        <div class="linha-info"><span class="label">Última checagem</span><span class="valor">${tempoRelativo(statusBotDb?.ultimaChecagem)}</span></div>
+        ${botErro ? `<div class="erro-detalhe">${botErro}</div>` : ""}
+      </div>
+    `;
+
+    // --- WhatsApp ---
+    const statusWhats = acharStatusDb(statusIntegracoes, "whatsapp");
+    if (statusWhats) {
+      grid.innerHTML += `
+        <div class="card">
+          <div class="card-topo">
+            <div class="card-titulo">WhatsApp</div>
+            ${statusWhats.conectado ? badge("conectado", "verde") : badge("com problema", "vermelho")}
+          </div>
+          <div class="linha-info"><span class="label">Última checagem</span><span class="valor">${tempoRelativo(statusWhats.ultimaChecagem)}</span></div>
+          ${statusWhats.detalhe ? `<div class="erro-detalhe">${statusWhats.detalhe}</div>` : ""}
+        </div>
+      `;
+    } else {
+      grid.innerHTML += `
+        <div class="card">
+          <div class="card-topo">
+            <div class="card-titulo">WhatsApp</div>
+            ${badge("desativado", "cinza")}
+          </div>
+          <div class="linha-info"><span class="label">WHATSAPP_ENABLED</span><span class="valor">false</span></div>
+        </div>
+      `;
+    }
+
+    // ---------- Resumo numérico ----------
+    const cores = { totalMensagens: "", totalFalhas: "destaque-vermelho", totalErrosDeLog: "destaque-vermelho" };
+    const gridResumo = document.getElementById("grid-resumo");
+    gridResumo.innerHTML = `
+      <div class="stat"><div class="num">${resumo.totalMensagens}</div><div class="label">mensagens no total</div></div>
+      <div class="stat"><div class="num" style="color:${resumo.totalAguardandoRevisao > 0 ? "var(--amber)" : "var(--text)"}">${resumo.totalAguardandoRevisao}</div><div class="label">aguardando revisão</div></div>
+      <div class="stat"><div class="num" style="color:${resumo.totalBaixaConfianca > 0 ? "var(--amber)" : "var(--text)"}">${resumo.totalBaixaConfianca ?? 0}</div><div class="label">abaixo de ${resumo.limiarConfianca ?? 95}% confiança</div></div>
+      <div class="stat"><div class="num" style="color:${resumo.totalSemCategoria > 0 ? "var(--amber)" : "var(--text)"}">${resumo.totalSemCategoria ?? 0}</div><div class="label">sem categoria</div></div>
+      <div class="stat"><div class="num">${resumo.totalMapeamentosCategoria ?? 0}</div><div class="label">rotas de categoria</div></div>
+      <div class="stat"><div class="num">${resumo.totalCorrecoesCategoria ?? 0}</div><div class="label">correções manuais de categoria</div></div>
+      <div class="stat"><div class="num" style="color:${(resumo.taxaCorrecaoCategoriaAmostra ?? 0) > 10 ? "var(--amber)" : "var(--text)"}">${resumo.taxaCorrecaoCategoriaAmostra == null ? "—" : resumo.taxaCorrecaoCategoriaAmostra + "%"}</div><div class="label">taxa de correção nas categorias revisadas</div></div>
+      <div class="stat"><div class="num" style="color:${resumo.totalFalhas > 0 ? "var(--red)" : "var(--text)"}">${resumo.totalFalhas}</div><div class="label">falharam</div></div>
+      <div class="stat"><div class="num" style="color:${resumo.totalErrosDeLog > 0 ? "var(--red)" : "var(--text)"}">${resumo.totalErrosDeLog}</div><div class="label">erros de log</div></div>
+      <div class="stat"><div class="num" style="color:${resumo.totalFontesCadastradas === 0 ? "var(--amber)" : "var(--text)"}">${resumo.totalFontesCadastradas}</div><div class="label">fontes cadastradas</div></div>
+    `;
+
+    // ---------- Tabela de mensagens ----------
+    const corpo = document.getElementById("corpo-tabela-mensagens");
+    const vazio = document.getElementById("tabela-vazio");
+    corpo.innerHTML = "";
+    if (!ultimasMensagens || ultimasMensagens.length === 0) {
+      vazio.style.display = "block";
+    } else {
+      vazio.style.display = "none";
+      const coresStatus = {
+        RECEBIDA: "cinza", PROCESSANDO: "amarelo", PROCESSADA: "verde",
+        AGUARDANDO_REVISAO: "amarelo", PUBLICANDO: "amarelo",
+        PUBLICADA_TELEGRAM: "verde", PUBLICADA_WHATSAPP: "verde",
+        FALHOU: "vermelho", DESCARTADA_DUPLICADA: "cinza", DESCARTADA_MANUAL: "cinza",
+      };
+      ultimasMensagens.forEach((m) => {
+        const cor = coresStatus[m.status] || "cinza";
+        const falhaLink = falhasDeConversao(m).length > 0;
+        corpo.innerHTML += `
+          <tr class="${falhaLink ? "com-falha-link" : ""}">
+            <td>${tempoRelativo(m.criadoEm)}</td>
+            <td>${m.grupoFonte?.nome || "—"}<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;">${(m.categorias || []).map((mc) => `<span class="categoria-chip">${escaparHtml(mc.categoria?.nome || "")}</span>`).join("")}</div></td>
+            <td class="txt-truncado">${(m.conteudoOriginal || "").replace(/</g, "&lt;")}</td>
+            <td><span class="tag-status badge ${cor}">${m.status}</span></td>
+          </tr>
+        `;
+      });
+    }
+  }
+
+  // Se já tem token salvo, tenta usar direto
+  if (getToken()) iniciarApp();
+})();
+</script>
+</body>
+</html>

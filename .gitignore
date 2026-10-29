@@ -1,0 +1,34 @@
+
+# Variáveis de ambiente e segredos
+.env
+.env.*
+!.env.example
+
+# Dependências e arquivos gerados
+node_modules/
+dist/
+build/
+coverage/
+
+# Sessões e arquivos temporários
+sessions/
+tmp/
+temp/
+*.log
+
+# Arquivos compactados
+*.zip
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editores e IDEs
+.vscode/
+.idea/
+
+# Cache
+.cache/
+.eslintcache
+*.tsbuildinfo

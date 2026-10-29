@@ -1,0 +1,2 @@
+-- RenameIndex
+ALTER INDEX "mensagens_ignoradas_grupo_fonte_id_id_externo_original_motivo_k" RENAME TO "mensagens_ignoradas_grupo_fonte_id_id_externo_original_moti_key";
